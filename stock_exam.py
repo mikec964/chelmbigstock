@@ -10,7 +10,7 @@ from stock import Stock
 
 Stocks = []
 for stock in stock_names:
-    this_stock = Stock(stock, '/Users/mikec/webdev/python/stockexam/data')
+    this_stock = Stock(stock, 'data')
     this_stock.populate()
     Stocks.append(this_stock)
 
