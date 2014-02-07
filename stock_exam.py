@@ -1,12 +1,14 @@
 # The python script to learn about stock picking
 
 import os
+from stock import Stock
+from learningData import learningData
+from LinReg import LinReg
 
 stock_names = ['ba', 'cat', 'dd', 'ge', 'gs', 'ibm', 'jnj', 'jpm', 'mmm', 'xom']
 #for stock in stocks:
 #   print(stock)
 
-from stock import Stock
 
 Stocks = []
 for stock in stock_names:
@@ -14,11 +16,9 @@ for stock in stock_names:
     this_stock.populate()
     Stocks.append(this_stock)
 
-from learningData import learningData
 trainingData = learningData()
 trainingData.construct(Stocks,['1/1/1980', [50, 100, 150], 50])
 
-from LinReg import LinReg
 linearRegression = LinReg(trainingData)
 linearRegression.calcCost(trainingData)
 costArray = linearRegression.gradientDescent(trainingData, 0.1)
