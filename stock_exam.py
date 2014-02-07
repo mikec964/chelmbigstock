@@ -1,4 +1,5 @@
 # The python script to learn about stock picking
+# test
 
 import os
 from stock import Stock
