@@ -1,25 +1,3 @@
-import os
-
-def read_stock(stock, path):
-   ''' reads in data about a stock from a csv file of name stock.csv
-       found in path path'''
-
-   file = os.path.join(path,stock + '.csv')
-
-   import csv
-   with open(file, newline='') as f:
-      reader = csv.reader(f)
-      headers = f.readline()
-      dates = []
-      values = []
-      for row in reader:
-         date = convert_date(row[0])
-         # Data in the csv files are in reverse cronological order,
-         # insert is used rather than append to put them into cronological
-         dates.append(date) 
-         values.append(float(row[6]))
-      return(dates, values)
-
 def convert_date(date):
    ''' 
        string >- int

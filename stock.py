@@ -1,3 +1,7 @@
+import os
+import csv
+from read_stock import convert_date
+
 class Stock(object):
     ''' The object of a stock '''
     def __init__(self, name, directory):
@@ -14,7 +18,20 @@ class Stock(object):
         ''' This method populates the dates and values of the stock.
             The name of the file is the name of the stock and the directory
             is already known so no arguments are needed'''
-        from read_stock import read_stock
-        self.dates, self.values = read_stock(self.name, self.directory)
+
+        file = os.path.join(self.directory, self.name + '.csv')
+        with open(file, newline='') as f:
+            reader = csv.reader(f)
+            headers = f.readline()
+            dates = []
+            values = []
+            for row in reader:
+                date = convert_date(row[0])
+                # Data in the csv files are in reverse cronological order,
+                # insert is used rather than append to put them into cronological
+                dates.append(date) 
+                values.append(float(row[6]))
+        self.dates, self.values = dates, values
+
 
 
