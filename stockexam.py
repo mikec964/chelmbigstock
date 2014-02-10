@@ -11,6 +11,8 @@ def main():
 	stock_names = ['ba', 'cat', 'dd', 'ge', 'gs', 'ibm', 'jnj', 'jpm', 'mmm', 'xom']
 	#for stock in stocks:
 	#   print(stock)
+    
+        # Andy's comment 2
 
 	Stocks = []
 	for stock in stock_names:
