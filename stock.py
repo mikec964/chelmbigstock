@@ -3,7 +3,8 @@ import csv
 from read_stock import convert_date
 
 class Stock(object):
-    ''' The object of a stock '''
+    """A stock has a symbol and a list of date/value pairs"""
+    
     def __init__(self, name, directory):
         ''' The creation of a stock takes in a name assuming it is a
             character string and creates arrays to store dates and
