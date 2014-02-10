@@ -12,6 +12,8 @@ def main():
 	#for stock in stocks:
 	#   print(stock)
 
+        # andy's comment
+
 	Stocks = []
 	for stock in stock_names:
 	    this_stock = Stock(stock, 'data')
