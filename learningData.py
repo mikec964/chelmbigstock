@@ -1,3 +1,6 @@
+from stock import Stock
+from dateutil import convert_date
+
 class learningData(object):
     ''' The object of data. This object will be composed
         from an array of stocks and dates. It will consist
@@ -36,8 +39,6 @@ class learningData(object):
             '''
         self.n = len(dates[1]) + 1
         self.m = 0
-        from stock import Stock
-        from read_stock import convert_date
         referenceDate = convert_date(dates[0])
         num_stocks = len(stocks)
         print (referenceDate)
