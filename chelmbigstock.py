@@ -5,7 +5,8 @@
 import os
 from stock import Stock
 from learningData import learningData
-from LinReg import LinReg
+import numpy as np
+from sklearn import datasets, linear_model
 
 def main():
 	stock_names = ['ba', 'cat', 'dd', 'ge', 'gs', 'ibm', 'jnj', 'jpm', 'mmm', 'xom']
@@ -25,16 +26,10 @@ def main():
 	trainingData = learningData()
 	trainingData.construct(Stocks,['1/1/1980', [50, 100, 150], 50])
 
-	linearRegression = LinReg(trainingData)
-	linearRegression.calcCost(trainingData)
-	costArray = linearRegression.gradientDescent(trainingData, 0.1)
-
-	f = open('cost.txt', 'w')
-	for i in range(0, len(costArray)):
-	    outString = str(i) + ' ' + str(costArray[i])
-	    f.write(outString)
-	    f.write('\n')          
-	f.close()
+	
+	clf = linear_model.Ridge (alpha = 0.0, fit_intercept=False)
+	clf.fit(trainingData.X, trainingData.y)
+	
 
 
 if __name__ == "__main__":
