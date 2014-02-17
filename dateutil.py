@@ -1,4 +1,4 @@
-def convert_date(date):
+def days_since_1900(date):
     '''Convert string date to days since 1/1/1900
 
     Intakes a date month/day/year and returns number of days since 1/1/1900

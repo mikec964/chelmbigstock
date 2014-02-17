@@ -1,5 +1,5 @@
 from stock import Stock
-from dateutil import convert_date
+import dateutil
 
 class learningData(object):
     ''' The object of data. This object will be composed
@@ -39,7 +39,7 @@ class learningData(object):
             '''
         self.n = len(dates[1]) + 1
         self.m = 0
-        referenceDate = convert_date(dates[0])
+        referenceDate = dateutil.days_since_1900(dates[0])
         num_stocks = len(stocks)
         print (referenceDate)
         self.m = 0

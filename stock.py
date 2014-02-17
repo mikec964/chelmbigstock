@@ -1,6 +1,6 @@
 import os
 import csv
-from dateutil import convert_date
+import dateutil
 
 class Stock(object):
     """A stock has a symbol and a list of date/value pairs"""
@@ -27,12 +27,9 @@ class Stock(object):
             dates = []
             values = []
             for row in reader:
-                date = convert_date(row[0])
+                date = dateutil.days_since_1900(row[0])
                 # Data in the csv files are in reverse cronological order,
                 # insert is used rather than append to put them into cronological
                 dates.append(date) 
                 values.append(float(row[6]))
         self.dates, self.values = dates, values
-
-
-
