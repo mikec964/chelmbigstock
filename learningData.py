@@ -75,8 +75,3 @@ class learningData(object):
                 adjustedValue = stocks[i].values[futureDay]/referenceValue
                 self.y.append(adjustedValue)
                                    
-            
-        
-        
-        
-    
