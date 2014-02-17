@@ -1,3 +1,5 @@
+from learningData import learningData
+
 class LinReg(object):
     ''' This object is used to do all functions of linear regression
         on a data object. It contains all values of theta internally
@@ -5,7 +7,6 @@ class LinReg(object):
 
     def __init__(self, data):
         '''     '''
-        from learningData import learningData
         self.cost = 0
         self.theta = [0] * (data.n + 1)
         self.gradient = [0] * (data.n + 1)
