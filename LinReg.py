@@ -1,7 +1,7 @@
 class LinReg(object):
     ''' This object is used to do all functions of linear regression
         on a data object. It contains all values of theta internally
-        and has methods to properly compute these values of theta'''
+        and has methods to properly  compute these values of theta'''
 
     def __init__(self, data):
         '''     '''
