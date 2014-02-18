@@ -21,7 +21,7 @@ class Stock(object):
             is already known so no arguments are needed'''
 
         file = os.path.join(self.directory, self.name + '.csv')
-        with open(file, newline='') as f:
+        with open(file, 'U') as f:
             reader = csv.reader(f)
             headers = f.readline()
             dates = []
