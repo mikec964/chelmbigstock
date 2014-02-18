@@ -1,5 +1,6 @@
 from stock import Stock
 import dateutil
+import sys
 
 class learningData(object):
     ''' The object of data. This object will be composed
@@ -39,10 +40,21 @@ class learningData(object):
             '''
         self.n = len(dates[1]) + 1
         self.m = 0
+        self.append(stocks, dates)
+        
+    def append(self, stocks, dates):
+        ''' This method appends data to a learningData object
+            It is ment to be called from construct
+            for a new object or from outside the method to append to an existing'''
+        
+        if (self.n != len(dates[1]) + 1):
+            sys.exit("trying to append to wrong size data set")
+        
+        
         referenceDate = dateutil.days_since_1900(dates[0])
         num_stocks = len(stocks)
         print (referenceDate)
-        self.m = 0
+        
         for i in range(0, num_stocks):
             elements = len(stocks[i].dates) # This is the number of entries in stocks
             firstDayAvailable = stocks[i].dates[elements-1]
@@ -59,10 +71,10 @@ class learningData(object):
                     iDay -= 1
                 stockDays = []
                 stockDays.append(iDay)
-                # Construct an array of indicies of values to constuct from
+                # Construct an array of indices of values to construct from
                 for iMark in range(0, len(dates[1])):
                     stockDays.append(iDay + dates[1][iMark])
-                # Now go through array of indicies and get the trading values of those days
+                # Now go through array of indices and get the trading values of those days
                 tempValues = []
                 referenceValue = stocks[i].values[iDay] # All values for this stock are divided by this
                 for iMark in range(0, len(stockDays)):
