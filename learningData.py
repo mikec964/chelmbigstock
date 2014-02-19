@@ -2,7 +2,7 @@ from stock import Stock
 import dateutil
 
 class learningData(object):
-    ''' The object of data. This object will be composed
+    ''' The  object of data. This object will be composed
         from an array of stocks and dates. It will consist
         of both input data (xs) and output data (ys). '''
     def __init__(self):
