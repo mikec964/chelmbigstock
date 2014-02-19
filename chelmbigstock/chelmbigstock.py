@@ -2,6 +2,7 @@
 
 # A python script to learn about stock picking
 
+#import chelmbigstock
 import os
 from stock import Stock
 from learningData import learningData
@@ -20,7 +21,7 @@ def main():
 
 	Stocks = []
 	for stock in stock_names:
-	    this_stock = Stock(stock, 'data')
+	    this_stock = Stock(stock, '../data')
 	    this_stock.populate()
 	    Stocks.append(this_stock)
 
