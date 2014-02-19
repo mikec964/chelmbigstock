@@ -12,14 +12,12 @@ setup(
     classifiers = [
         'Programming Language :: Python',
         'Operating System :: OS Independent',
-        'Development Status :: Pre-alpha',
+        'Development Status :: 1 - Planning',
         'Intended Audience :: Developers',
+        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'Topic :: System :: Distributed Computing',
+        'Topic :: Scientific/Engineering :: Information Analysis',
     ],
 
-    long_description = """\
-Chelmsford Big Stock
---------------------
-
-At the moment, this program analyzes a few stock histories and calculates their alpha. Or something.
-"""
+    long_description = open('README.rst').read(),
  )
