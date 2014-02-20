@@ -2,13 +2,14 @@
 
 # A python script to learn about stock picking
 
-#import chelmbigstock
 import os
-from stock import Stock
-from learningData import learningData
+
 import numpy as np
 from sklearn import linear_model
 import math
+
+from stock import Stock
+from learningData import learningData
 
 def main():
 	stock_names = ['ba', 'cat', 'dd', 'ge', 'gs', 'ibm', 'jnj', 'jpm', 'mmm', 'xom']
