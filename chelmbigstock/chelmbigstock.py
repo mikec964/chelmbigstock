@@ -41,6 +41,8 @@ def main():
     # To look for overfitting the code loops through values of alpha plotting distance between
     # the predicted values and actual data and various alphas
 	alph = 0.01
+	#filename = "output/filename.txt"
+	#dir = os.path.dirname(filename)
 	f = open('alpha.txt', 'w')
 	while alph < 0.2:
 		# First fit the data for each alpha
