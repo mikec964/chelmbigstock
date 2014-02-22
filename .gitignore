@@ -1,3 +1,6 @@
 __pycache__
 *.pyc
+*.sublime-project
+*.sublime-workspace
 cost.txt
+alpha.txt
