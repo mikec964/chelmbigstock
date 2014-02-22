@@ -1,3 +1,6 @@
 __pycache__
 *.pyc
 cost.txt
+.metadata/
+.project
+.pydevproject
