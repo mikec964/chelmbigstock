@@ -10,6 +10,7 @@ import math
 
 from stock import Stock
 from learningData import learningData
+# Andy's comment
 
 def main():
     stock_names = ['ba', 'cat', 'dd', 'ge', 'gs', 'ibm', 'jnj', 'jpm', 'mmm', 'xom']
