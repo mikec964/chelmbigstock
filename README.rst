@@ -6,3 +6,4 @@ This application is being created by the Chelmsford Big Data Study Group. We kee
 https://github.com/mikec964/chelmbigstock.
 
 Learning git has been a huge timesuck.
+It's all good until you work with Github.
