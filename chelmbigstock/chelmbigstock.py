@@ -13,30 +13,7 @@ from learningData import learningData
 
 def main():
     stock_names = ['ba', 'cat', 'dd', 'ge', 'gs', 'ibm', 'jnj', 'jpm', 'mmm', 'xom']
-	#for stock in stocks:
-	#   print(stock)
     
-
-    Stocks = []
-    for stock in stock_names:
-        this_stock = Stock(stock, '../data')
-        this_stock.populate()
-        Stocks.append(this_stock)
-
-    trainingData = learningData()
-	trainingData.construct(Stocks,['1/1/1980', [50, 100, 150], 50])
-	trainingData.append(Stocks,['1/1/1982', [50, 100, 150], 50])
-	
-	cv_data = learningData()
-	cv_data.construct(Stocks,['1/1/1990', [50, 100, 150], 50])
-	cv_data.append(Stocks,['1/1/1992', [50, 100, 150], 50])
-	
-	clf = linear_model.Ridge (alpha = 0.1, fit_intercept=False)
-	clf.fit(trainingData.X, trainingData.y)
-	
-=======
-    #for stock in stocks:
-    #   print(stock)
 
     Stocks = []
     for stock in stock_names:
@@ -47,15 +24,14 @@ def main():
     trainingData = learningData()
     trainingData.construct(Stocks,['1/1/1980', [50, 100, 150], 50])
     trainingData.append(Stocks,['1/1/1982', [50, 100, 150], 50])
-    
+	
     cv_data = learningData()
     cv_data.construct(Stocks,['1/1/1990', [50, 100, 150], 50])
     cv_data.append(Stocks,['1/1/1992', [50, 100, 150], 50])
-    
+	
     clf = linear_model.Ridge (alpha = 0.1, fit_intercept=False)
     clf.fit(trainingData.X, trainingData.y)
-    
->>>>>>> 1a26b0bf0a5cab34e77bf8cbd4154a3eb87e0880
+	
 
     # To look for overfitting the code loops through values of alpha plotting distance between
     # the predicted values and actual data and various alphas
