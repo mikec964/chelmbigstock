@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # A python script to learn about stock picking
+# Anil's test comment
 
 import os
 
