@@ -12,19 +12,16 @@ from stock import Stock
 from learningData import learningData
 
 def main():
-	stock_names = ['ba', 'cat', 'dd', 'ge', 'gs', 'ibm', 'jnj', 'jpm', 'mmm', 'xom']
+    stock_names = ['ba', 'cat', 'dd', 'ge', 'gs', 'ibm', 'jnj', 'jpm', 'mmm', 'xom']
 	#for stock in stocks:
 	#   print(stock)
     
-        # Andy's comment 2
 
-        # andy's comment
-
-	Stocks = []
-	for stock in stock_names:
-	    this_stock = Stock(stock, '../data')
-	    this_stock.populate()
-	    Stocks.append(this_stock)
+    Stocks = []
+    for stock in stock_names:
+        this_stock = Stock(stock, '../data')
+        this_stock.populate()
+        Stocks.append(this_stock)
 
 	trainingData = learningData()
 	trainingData.construct(Stocks,['1/1/1980', [50, 100, 150], 50])
