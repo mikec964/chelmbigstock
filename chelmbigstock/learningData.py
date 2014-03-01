@@ -42,6 +42,26 @@ class learningData(object):
         self.m = 0
         self.append(stocks, dates)
         
+    def _find_ref_date_idx(self, stock, ref_date):
+        ''' Find index of ref_date. ref_date might not be a trading day in which case
+            we will start with index of first trading day after ref_date'''
+        
+        l = 0
+        r = len(stock.dates)
+        if r == 0:
+            return -1        # when no dates, what should we return?
+
+        while l < r - 1:
+            m = l + (r - l) // 2
+            if stock.dates[m] > ref_date:
+                l = m
+            elif stock.dates[m] < ref_date:
+                r = m
+            else:
+                return m
+
+        return l
+
     def append(self, stocks, dates):
         ''' This method appends data to a learningData object
             It is ment to be called from construct
@@ -61,14 +81,7 @@ class learningData(object):
             firstDayNeeded = referenceDate - max(dates[1]) # How far back I need to go
             if (firstDayNeeded > firstDayAvailable): 
                 self.m += 1
-                # Find index of referenceDate. refererenceDate might not be a trading
-                # day in which case we will start with index of first trading day
-                # after referenceDay
-                iDay = 0
-                while (stocks[i].dates[iDay] >= referenceDate):
-                    iDay += 1
-                if (stocks[i].dates[iDay] < referenceDate):
-                    iDay -= 1
+                iDay = self._find_ref_date_idx(stocks[i], referenceDate)
                 stockDays = []
                 stockDays.append(iDay)
                 # Construct an array of indices of values to construct from
