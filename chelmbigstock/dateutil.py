@@ -30,3 +30,27 @@ def days_since_1900(date):
 
     days = daysPrevYears + daysThisYear
     return(days)
+
+def find_ref_date_idx(stock, ref_date):
+    ''' Find index of ref_date. ref_date might not be a trading day in which case
+        we will start with index of first trading day after ref_date'''
+        
+    l = 0
+    r = len(stock.dates)
+    if r == 0:
+        return -1        # when no dates, what should we return?
+    
+    if ref_date < min(stock.dates):
+        return -1        # when ref_date is less than all in array return -1
+
+    while l < r - 1:
+        m = l + (r - l) // 2
+        if stock.dates[m] > ref_date:
+            l = m
+        elif stock.dates[m] < ref_date:
+            r = m
+        else:
+            return m
+
+    return l
+

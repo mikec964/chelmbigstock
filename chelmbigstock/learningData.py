@@ -38,30 +38,13 @@ class learningData(object):
             Data object.
 
             '''
+        self.X = []
+        self.y = []
         self.n = len(dates[1]) + 1
         self.m = 0
         self.append(stocks, dates)
         
-    def _find_ref_date_idx(self, stock, ref_date):
-        ''' Find index of ref_date. ref_date might not be a trading day in which case
-            we will start with index of first trading day after ref_date'''
-        
-        l = 0
-        r = len(stock.dates)
-        if r == 0:
-            return -1        # when no dates, what should we return?
-
-        while l < r - 1:
-            m = l + (r - l) // 2
-            if stock.dates[m] > ref_date:
-                l = m
-            elif stock.dates[m] < ref_date:
-                r = m
-            else:
-                return m
-
-        return l
-
+ 
     def append(self, stocks, dates):
         ''' This method appends data to a learningData object
             It is ment to be called from construct
@@ -71,17 +54,20 @@ class learningData(object):
             sys.exit("trying to append to wrong size data set")
         
         
-        referenceDate = dateutil.days_since_1900(dates[0])
+        referenceDate = dates[0]
         num_stocks = len(stocks)
-        print (referenceDate)
         
         for i in range(0, num_stocks):
+            # Before we add a stock we must makes sure the dates go back far enough
+            # iDay is the index of the reference date. We need all this plus the
+            # maximum of the history being used in order to use this stock
+            iDay = dateutil.find_ref_date_idx(stocks[i], referenceDate)
             elements = len(stocks[i].dates) # This is the number of entries in stocks
             firstDayAvailable = stocks[i].dates[elements-1]
+            iDayFirstAvail = dateutil.find_ref_date_idx(stocks[i], firstDayAvailable)
             firstDayNeeded = referenceDate - max(dates[1]) # How far back I need to go
-            if (firstDayNeeded > firstDayAvailable): 
+            if (iDay + max(dates[1]) < iDayFirstAvail) and (iDay != -1): 
                 self.m += 1
-                iDay = self._find_ref_date_idx(stocks[i], referenceDate)
                 stockDays = []
                 stockDays.append(iDay)
                 # Construct an array of indices of values to construct from
@@ -92,7 +78,9 @@ class learningData(object):
                 referenceValue = stocks[i].values[iDay] # All values for this stock are divided by this
                 for iMark in range(0, len(stockDays)):
                     # divide stock value by value on reference date 
-                    adjustedValue = stocks[i].values[stockDays[iMark]]/referenceValue
+                    this_stock = stocks[i]
+                    stock_day = stockDays[iMark]
+                    adjustedValue = this_stock.values[stock_day]/referenceValue
                     tempValues.append(adjustedValue)
                 self.X.append(tempValues)
                 # Now get the future value and append it to self.y

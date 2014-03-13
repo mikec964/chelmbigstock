@@ -8,6 +8,8 @@ import os
 import numpy as np
 from sklearn import linear_model
 import math
+import dateutil
+from operator import itemgetter
 
 from stock import Stock
 from learningData import learningData
@@ -24,13 +26,20 @@ def main():
         Stocks.append(this_stock)
 
     trainingData = learningData()
-    trainingData.construct(Stocks,['1/1/1980', [50, 100, 150], 50])
-    trainingData.append(Stocks,['1/1/1982', [50, 100, 150], 50])
+    referenceDate = dateutil.days_since_1900('1/1/1980')
+    iDay = dateutil.find_ref_date_idx(Stocks[0], referenceDate)
+   # trainingData.construct(Stocks,['1/1/1980', [50, 100, 150], 50])
+    trainingData.construct(Stocks,[referenceDate, [50, 100, 150], 50])
+    referenceDate = dateutil.days_since_1900('1/1/1981')
+    trainingData.append(Stocks,[referenceDate, [50, 100, 150], 50])
 	
     cv_data = learningData()
-    cv_data.construct(Stocks,['1/1/1990', [50, 100, 150], 50])
-    cv_data.append(Stocks,['1/1/1992', [50, 100, 150], 50])
+    referenceDate = dateutil.days_since_1900('1/1/1982')
+    cv_data.construct(Stocks,[referenceDate, [50, 100, 150], 50])
+    referenceDate = dateutil.days_since_1900('1/1/1983')
+    cv_data.append(Stocks,[referenceDate, [50, 100, 150], 50])
 	
+    XX = trainingData.X
     clf = linear_model.Ridge (alpha = 0.1, fit_intercept=False)
     clf.fit(trainingData.X, trainingData.y)
 	
@@ -55,7 +64,38 @@ def main():
         # Write out the values
         f.write(str(alph) +  " " + str(diff_data) + " " + str(diff_cv) +  "\n")
         alph = alph * 1.5 # Increment alph
+    f.close()
+     
+     # Do the fit based on best alpha value   
+    clf = linear_model.Ridge (alpha = 0.05, fit_intercept=False)
+    clf.fit(trainingData.X, trainingData.y)
     
+    portfolio_value = 1.0 # Start with a portfolio value of 1.0
+    average_value = 1.0
+    investingData = learningData()
+    
+    # Construct an learningData set
+    referenceDate = dateutil.days_since_1900('8/2/1984')
+    iDay = dateutil.find_ref_date_idx(Stocks[0], referenceDate)
+  #  print (iDay, Stocks[0].dates[iDay] )
+    f = open('value.txt', 'w')
+    
+    while iDay > 100:
+        investingData.construct(Stocks,[referenceDate, [50, 100, 150], 50])  
+        # Predict growth of stock values based on history
+        predict_data = clf.predict(investingData.X)
+        # Predict the stock that will have best growth
+        index_max, value = max(enumerate(predict_data), key=itemgetter(1))
+        # Upgrade portfolio value based on its actual performance
+        portfolio_value = portfolio_value * investingData.y[index_max]
+        average_value = average_value * np.mean(investingData.y)
+        f.write(str(referenceDate) + " " + str(portfolio_value) + " " + str(average_value) + "\n")
+        #print(portfolio_value)
+        iDay = iDay - 50
+        referenceDate = Stocks[0].dates[iDay]
+    f.close()
+    
+    print("run finished")
 
 
 if __name__ == "__main__":
