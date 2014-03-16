@@ -4,6 +4,7 @@ __pycache__
 *.sublime-workspace
 cost.txt
 alpha.txt
+value.txt
 .metadata
 .project
 .pydevproject
