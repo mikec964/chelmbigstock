@@ -1,9 +1,9 @@
-from stock import Stock
-import dateutil
 import sys
 
+from Stock import Stock
+import dateutil
 
-class learningData(object):
+class LearningData(object):
     """ The  object of data. This object will be composed
         from an array of stocks and dates. It will consist
         of both input data (xs) and output data (ys). 
@@ -58,37 +58,36 @@ class learningData(object):
         if (self.n != len(dates[1]) + 1):
             sys.exit("trying to append to wrong size data set")
         
-        referenceDate = dates[0]
+        reference_date = dates[0]
         num_stocks = len(stocks)
         
         for i in range(0, num_stocks):
             # Before we add a stock we must makes sure the dates go back far enough
-            # iDay is the index of the reference date. We need all this plus the
+            # i_day is the index of the reference date. We need all this plus the
             # maximum of the history being used in order to use this stock
-            iDay = dateutil.find_ref_date_idx(stocks[i], referenceDate)
+            i_day = dateutil.find_ref_date_idx(stocks[i], reference_date)
             elements = len(stocks[i].dates) # This is the number of entries in stocks
-            firstDayAvailable = stocks[i].dates[elements-1]
-            iDayFirstAvail = dateutil.find_ref_date_idx(stocks[i], firstDayAvailable)
-            firstDayNeeded = referenceDate - max(dates[1]) # How far back I need to go
-            if (iDay + max(dates[1]) < iDayFirstAvail) and (iDay != -1): 
+            first_day_avail = stocks[i].dates[elements-1]
+            i_day_first_avail = dateutil.find_ref_date_idx(stocks[i], first_day_avail)
+            if (i_day + max(dates[1]) < i_day_first_avail) and (i_day != -1): 
                 self.m += 1
-                stockDays = []
-                stockDays.append(iDay)
+                stock_days = []
+                stock_days.append(i_day)
                 # Construct an array of indices of values to construct from
-                for iMark in range(0, len(dates[1])):
-                    stockDays.append(iDay + dates[1][iMark])
+                for i_mark in range(0, len(dates[1])):
+                    stock_days.append(i_day + dates[1][i_mark])
                 # Now go through array of indices and get the trading values of those days
-                tempValues = []
-                referenceValue = stocks[i].values[iDay] # All values for this stock are divided by this
-                for iMark in range(0, len(stockDays)):
+                temp_values = []
+                reference_value = stocks[i].values[i_day] # All values for this stock are divided by this
+                for i_mark in range(0, len(stock_days)):
                     # divide stock value by value on reference date 
                     this_stock = stocks[i]
-                    stock_day = stockDays[iMark]
-                    adjustedValue = this_stock.values[stock_day]/referenceValue
-                    tempValues.append(adjustedValue)
-                self.X.append(tempValues)
+                    stock_day = stock_days[i_mark]
+                    adjusted_value = this_stock.values[stock_day]/reference_value
+                    temp_values.append(adjusted_value)
+                self.X.append(temp_values)
                 # Now get the future value and append it to self.y
-                futureDay = iDay - dates[2]
-                adjustedValue = stocks[i].values[futureDay]/referenceValue
-                self.y.append(adjustedValue)
+                future_day = i_day - dates[2]
+                adjusted_value = stocks[i].values[future_day]/reference_value
+                self.y.append(adjusted_value)
                                    
