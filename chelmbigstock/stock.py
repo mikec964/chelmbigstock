@@ -6,7 +6,7 @@ class Stock(object):
     """A stock has a symbol and a list of date/value pairs"""
     
     def __init__(self, name, directory):
-        ''' The creation of a stock takes in a name assuming it is a
+        '''The creation of a stock takes in a name assuming it is a
             character string and creates arrays to store dates and
             values'''
         self.name = name
