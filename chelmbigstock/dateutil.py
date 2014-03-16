@@ -1,9 +1,10 @@
-def days_since_1900(date):
-    '''Convert string date to days since 1/1/1900
 
+
+def days_since_1900(date):
+    """Convert string date to days since 1/1/1900
     Intakes a date month/day/year and returns number of days since 1/1/1900
     convert_date('1/1/1950') -> 18262. Note 1900 was not leap year
-    '''
+    """
 
     daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]  
     dateArray = date.split('/')
@@ -31,9 +32,11 @@ def days_since_1900(date):
     days = daysPrevYears + daysThisYear
     return(days)
 
+
 def find_ref_date_idx(stock, ref_date):
-    ''' Find index of ref_date. ref_date might not be a trading day in which case
-        we will start with index of first trading day after ref_date'''
+    """ Find index of ref_date. ref_date might not be a trading day in which case
+        we will start with index of first trading day after ref_date
+        """
         
     l = 0
     r = len(stock.dates)

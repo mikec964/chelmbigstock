@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 
 # A python script to learn about stock picking
-# Anil's test comment
 
 import os
 
 import numpy as np
 from sklearn import linear_model
 import math
-import dateutil
 from operator import itemgetter
 
+import dateutil
 from stock import Stock
 from learningData import learningData
 # Andy's comment
@@ -40,7 +39,7 @@ def main():
     cv_data.append(Stocks,[referenceDate, [50, 100, 150], 50])
 	
     XX = trainingData.X
-    clf = linear_model.Ridge (alpha = 0.1, fit_intercept=False)
+    clf = linear_model.Ridge(alpha=0.1, fit_intercept=False)
     clf.fit(trainingData.X, trainingData.y)
 	
 
@@ -52,7 +51,7 @@ def main():
     f = open('alpha.txt', 'w')
     while alph < 0.2:
         # First fit the data for each alpha
-        clf = linear_model.Ridge (alpha = alph, fit_intercept=False)
+        clf = linear_model.Ridge (alpha=alph, fit_intercept=False)
         clf.fit(trainingData.X, trainingData.y)
         # Now measure how close model comes for both training data and cross validation data
         # The clf.predict produces a vector with one element for each element in the sample
@@ -67,7 +66,7 @@ def main():
     f.close()
      
      # Do the fit based on best alpha value   
-    clf = linear_model.Ridge (alpha = 0.05, fit_intercept=False)
+    clf = linear_model.Ridge (alpha=0.05, fit_intercept=False)
     clf.fit(trainingData.X, trainingData.y)
     
     portfolio_value = 1.0 # Start with a portfolio value of 1.0

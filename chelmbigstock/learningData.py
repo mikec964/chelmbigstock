@@ -2,24 +2,29 @@ from stock import Stock
 import dateutil
 import sys
 
+
 class learningData(object):
-    ''' The  object of data. This object will be composed
+    """ The  object of data. This object will be composed
         from an array of stocks and dates. It will consist
-        of both input data (xs) and output data (ys). '''
+        of both input data (xs) and output data (ys). 
+        """
+        
     def __init__(self):
-        ''' The data is originally two empty array. The first array will be
+        """ The data is originally two empty array. The first array will be
             two dimensional input array called x that is m x n. The second
             array called y is the output array that is m x 1. The number of
             stocks is denoted by m and the number of dates used for learning
-            is denoted by n. All notation is to be consistant with the
-            Coursera Machine Learning course as much as possible.'''
+            is denoted by n. All notation is to be consistent with the
+            Coursera Machine Learning course as much as possible.
+            """
+            
         self.X = []
         self.y = []
         self.m = 0
         self.n = 0
 
     def construct(self, stocks, dates):
-        ''' This method constructs the data arrays. The inputs are an array
+        """ This method constructs the data arrays. The inputs are an array
             of m stocks and an array of dates. The first element of dates
             is a character string to tell the referenced date such as
             '1/1/1980'. The second element is an array of n-1 integers
@@ -36,23 +41,22 @@ class learningData(object):
             go back as far in time. If 1/1/1980 is the reference date and
             gs only went public in 1999 this stock will be left out of the
             Data object.
-
-            '''
+            """
+            
         self.X = []
         self.y = []
         self.n = len(dates[1]) + 1
         self.m = 0
         self.append(stocks, dates)
         
- 
     def append(self, stocks, dates):
-        ''' This method appends data to a learningData object
-            It is ment to be called from construct
-            for a new object or from outside the method to append to an existing'''
+        """ This method appends data to a learningData object
+            It is meant to be called from construct
+            for a new object or from outside the method to append to an existing
+            """
         
         if (self.n != len(dates[1]) + 1):
             sys.exit("trying to append to wrong size data set")
-        
         
         referenceDate = dates[0]
         num_stocks = len(stocks)

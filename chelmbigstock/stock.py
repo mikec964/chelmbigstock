@@ -2,13 +2,16 @@ import os
 import csv
 import dateutil
 
+
 class Stock(object):
     """A stock has a symbol and a list of date/value pairs"""
     
     def __init__(self, name, directory):
-        ''' The creation of a stock takes in a name assuming it is a
+        """ The creation of a stock takes in a name assuming it is a
             character string and creates arrays to store dates and
-            values'''
+            values
+            """
+            
         self.name = name
         self.directory = directory
         self.length = 0
@@ -16,9 +19,10 @@ class Stock(object):
         self.values = []
 
     def populate(self):
-        ''' This method populates the dates and values of the stock.
+        """ This method populates the dates and values of the stock.
             The name of the file is the name of the stock and the directory
-            is already known so no arguments are needed'''
+            is already known so no arguments are needed
+            """
 
         file = os.path.join(self.directory, self.name + '.csv')
         with open(file, 'U') as f:
