@@ -12,30 +12,41 @@ from sklearn import linear_model
 import dateutil
 from Stock import Stock
 from LearningData import LearningData
-# Andy's comment
 
 def main():
     stock_names = ['ba', 'cat', 'dd', 'ge', 'gs', 'ibm', 'jnj', 'jpm', 'mmm', 'xom']
+    stock_names = ['mmm']
+    stock_names = []
+    f = open('stocks_read.txt', 'r')
+    count = 0
+    max_stocks = 437
+    for stock_symbol in f:
+        stock_symbol = stock_symbol.strip()
+        stock_names.append(stock_symbol)
+        count = count + 1
+        if count >= max_stocks:
+            break
     
 
     stocks = []
     for stock in stock_names:
+        print(stock)
         this_stock = Stock(stock, '../data')
         this_stock.populate()
         stocks.append(this_stock)
 
     training_data = LearningData()
-    reference_date = dateutil.days_since_1900('1/1/1980')
+    reference_date = dateutil.days_since_1900('1980-01-01')
     i_day = dateutil.find_ref_date_idx(stocks[0], reference_date)
    # trainingData.construct(stocks,['1/1/1980', [50, 100, 150], 50])
     training_data.construct(stocks,[reference_date, [50, 100, 150], 50])
-    reference_date = dateutil.days_since_1900('1/1/1981')
+    reference_date = dateutil.days_since_1900('1981-01-01')
     training_data.append(stocks,[reference_date, [50, 100, 150], 50])
 	
     cv_data = LearningData()
-    reference_date = dateutil.days_since_1900('1/1/1982')
+    reference_date = dateutil.days_since_1900('1982-01-01')
     cv_data.construct(stocks,[reference_date, [50, 100, 150], 50])
-    reference_date = dateutil.days_since_1900('1/1/1983')
+    reference_date = dateutil.days_since_1900('1983-01-01')
     cv_data.append(stocks,[reference_date, [50, 100, 150], 50])
 	
     XX = training_data.X
@@ -74,7 +85,7 @@ def main():
     investing_data = LearningData()
     
     # Construct an LearningData set
-    reference_date = dateutil.days_since_1900('8/2/1984')
+    reference_date = dateutil.days_since_1900('1984-01-01')
     i_day = dateutil.find_ref_date_idx(stocks[0], reference_date)
   #  print (i_day, stocks[0].dates[i_day] )
     f = open('value.txt', 'w')

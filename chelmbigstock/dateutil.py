@@ -7,10 +7,10 @@ def days_since_1900(date):
     """
 
     days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]  
-    date_array = date.split('/')
-    month = int(date_array[0])
-    day = int(date_array[1])
-    year = int(date_array[2]) - 1900 #looking for number of days since 1900
+    date_array = date.split('-')
+    month = int(date_array[1])
+    day = int(date_array[2])
+    year = int(date_array[0]) - 1900 #looking for number of days since 1900
 
 # Start with days in previous years
     days_prev_years = year * 365

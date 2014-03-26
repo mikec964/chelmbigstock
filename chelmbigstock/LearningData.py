@@ -79,6 +79,8 @@ class LearningData(object):
                 # Now go through array of indices and get the trading values of those days
                 temp_values = []
                 reference_value = stocks[i].values[i_day] # All values for this stock are divided by this
+                if reference_value < 0.001:
+                    print (stocks[i].name, i_day)
                 for i_mark in range(0, len(stock_days)):
                     # divide stock value by value on reference date 
                     this_stock = stocks[i]

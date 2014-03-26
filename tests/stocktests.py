@@ -1,6 +1,6 @@
 import unittest
 
-from ..chelmbigstock.stock import Stock
+from chelmbigstock.Stock import Stock
 
 class test_stock(unittest.TestCase):
     '''Tests for the stock object.

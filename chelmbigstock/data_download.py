@@ -13,10 +13,21 @@ def main():
     
     #stock_download('aapl')
     f = open('stock_symbols.txt', 'r')
+    fout = open('stocks_read.txt', 'w')
+    count_max = 2000
+    count = 0
     for stock_symbol in f:
         stock_symbol = stock_symbol.strip()
-        stock_download(stock_symbol)
+        try:
+            stock_download(stock_symbol)
+            fout.write(stock_symbol + '\n')
+        except:
+            print("was not able to read file ", stock_symbol)
+        count = count + 1
+        if count >= count_max:
+            break
     f.close()
+    fout.close
 
 def stock_download(stock_symbol):
 
@@ -47,8 +58,12 @@ def stock_download(stock_symbol):
 #    #f = open("../data/historical.csv", "w")
     print(out_file)
     f = open(out_file, "w")
-    for line in lines:
-       f.write(line + "\n")
+    f.write(lines[0] + '\n')  # write out the header
+    #next(lines)
+    for line in lines[1:]:
+        elements = line.split(',')
+        if len(elements) > 1 and float(elements[6]):
+            f.write(line + "\n")
     f.close()
 
 if __name__ == "__main__":
