@@ -1,9 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # A python script to learn about stock picking
 
-import os
-import math
 from operator import itemgetter
 
 import numpy as np
