@@ -21,9 +21,10 @@ class Stock(object):
 
     def populate(self):
         """ This method populates the dates and values of the stock.
-            The name of the file is the name of the stock and the directory
-            is already known so no arguments are needed
-            """
+
+        The name of the file is the name of the stock and the directory
+        is already known so no arguments are needed
+        """
 
         file = os.path.join(self.directory, self.name + '.csv')
         with open(file, 'U') as f:

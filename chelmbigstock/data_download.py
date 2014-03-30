@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # A python script to download csv file to be used in stock analysis
 '''
