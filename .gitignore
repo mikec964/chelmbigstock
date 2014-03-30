@@ -8,3 +8,5 @@ value.txt
 .metadata
 .project
 .pydevproject
+chelmbigstock/stocks_read.txt
+data/*.csv
