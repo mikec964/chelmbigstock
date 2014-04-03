@@ -18,6 +18,25 @@ class Stock(object):
         self.length = 0
         self.dates = []
         self.values = []
+        
+    @classmethod
+    def read_stocks(cls, stock_file, max_stocks):
+        """ This method takes in a file of the stock symbols to be read and 
+            returns an array of Stock objects. """
+            
+        stocks = []
+        f = open(stock_file, 'r')
+        count = 0
+        for stock_symbol in f:
+            stock_symbol = stock_symbol.strip()
+            this_stock = Stock(stock_symbol, '../data')
+            this_stock.populate()
+            stocks.append(this_stock)
+            count = count + 1
+            if count >= max_stocks:
+                break
+        
+        return(stocks)
 
     def populate(self):
         """ This method populates the dates and values of the stock.

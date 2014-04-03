@@ -12,32 +12,17 @@ from Stock import Stock
 from LearningData import LearningData
 
 def main():
-    stock_names = ['ba', 'cat', 'dd', 'ge', 'gs', 'ibm', 'jnj', 'jpm', 'mmm', 'xom']
-    stock_names = ['mmm']
-    stock_names = []
-    f = open('stocks_read.txt', 'r')
-    count = 0
-    max_stocks = 437
-    for stock_symbol in f:
-        stock_symbol = stock_symbol.strip()
-        stock_names.append(stock_symbol)
-        count = count + 1
-        if count >= max_stocks:
-            break
     
-
-    stocks = []
+    max_stocks = 100
+    stocks = Stock.read_stocks('stocks_read.txt', max_stocks)
     stocks_train = []
     stocks_cv = []
     count = 0
-    for stock in stock_names:
-        this_stock = Stock(stock, '../data')
-        this_stock.populate()
-        stocks.append(this_stock)
+    for stock in stocks:
         if count % 2 == 0:
-            stocks_train.append(this_stock)
+            stocks_train.append(stock)
         else:
-            stocks_cv.append(this_stock)
+            stocks_cv.append(stock)
         count = count + 1
 
     training_data = LearningData()
