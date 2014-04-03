@@ -14,7 +14,7 @@ from LearningData import LearningData
 def main():
     
     max_stocks = 100
-    stocks = Stock.read_stocks('stocks_read.txt', max_stocks)
+    stocks = Stock.read_stocks('../data/stocks_read.txt', max_stocks)
     stocks_train = []
     stocks_cv = []
     count = 0

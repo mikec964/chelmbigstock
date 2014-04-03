@@ -13,7 +13,7 @@ def main():
     
     #stock_download('aapl')
     f = open('stock_symbols.txt', 'r')
-    fout = open('stocks_read.txt', 'w')
+    fout = open('../data/stocks_read.txt', 'w')
     count_max = 2000
     count = 0
     for stock_symbol in f:
