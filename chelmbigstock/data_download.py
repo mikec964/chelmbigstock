@@ -1,23 +1,40 @@
 #!/usr/bin/env python3
 
-# A python script to download csv file to be used in stock analysis
-'''
+"""
+A python script to download csv file for stock analysis
+
 Created on Mar 15, 2014
 
 @author: Andy Webber
-'''
+"""
+
 from urllib import request
 import datetime
 
-def stock_url(stock_symbol):
-    """Compose the web URL"""
+def stock_url(stock_symbol, day=None, month=None, year=None):
+    """Compose the web URL to download the stock data from Yahoo.com
 
-    page = "http://ichart.finance.yahoo.com/table.csv?s="
-    page = ''.join([page, stock_symbol])
+    This will load data from Jan 1, 1960 to present.
+    Mostly for test purposes, you can specify the most recent data you'd
+    like to collect, instead of defaulting to the present.
+
+    >>> stock_url('IBM', 31, 1, 2013)
+    'http://ichart.finance.yahoo.com/table.csv?s=IBM&amp;d=1&amp;e=31&amp;f=2013&amp;g=d&amp;a=1&amp;b=1&amp;c=1960&amp;ignore=.csv'
+
+    """
+
+    page = "http://ichart.finance.yahoo.com/table.csv?"
+    page = ''.join([page, 's=', stock_symbol])
     now = datetime.datetime.now()
-    page = ''.join([page, '&amp;d=', str(now.month)])
-    page = ''.join([page, '&amp;e=', str(now.day)])
-    page = ''.join([page, '&amp;f=', str(now.year)])
+    if day == None:
+        day = now.day
+    if month == None:
+        month = now.month
+    if year == None:
+        year = now.year
+    page = ''.join([page, '&amp;d=', str(month)])
+    page = ''.join([page, '&amp;e=', str(day)])
+    page = ''.join([page, '&amp;f=', str(year)])
     page = ''.join([page, '&amp;g=d'])
     # Set the start date to Jan 1 1960 and the file will pick up data for as far
     # back as possible
@@ -55,7 +72,7 @@ def stock_download(stock_symbol):
             f.write(line + "\n")
     f.close()
 
-def main():
+def download_all():
     #stock_download('aapl')
     f = open('stock_symbols.txt', 'r')
     fout = open('../data/stocks_read.txt', 'w')
@@ -74,6 +91,9 @@ def main():
     f.close()
     fout.close
 
+    
+def main():
+    download_all()
 
 if __name__ == "__main__":
     main()

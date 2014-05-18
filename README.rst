@@ -32,3 +32,6 @@ From the tests folder, use::
 
     python -m unittest discover -p '*tests.py'
 
+From the chelmbigstock folder, you can test the docs for a module with::
+
+    python3 -m doctest -v data_download.py
