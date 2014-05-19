@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-"""
-A python script to download csv file for stock analysis
+""" Downloads CSV files for stock analysis
 
 Created on Mar 15, 2014
 
@@ -11,10 +10,11 @@ Created on Mar 15, 2014
 from urllib import request
 import datetime
 
-def stock_url(stock_symbol, day=None, month=None, year=None):
-    """Compose the web URL to download the stock data from Yahoo.com
 
-    This will load data from Jan 1, 1960 to present.
+def stock_url(stock_symbol, day=None, month=None, year=None):
+    """ Compose the web URL to download the stock data from Yahoo.com
+
+    This will request data from Jan 1, 1960 to present.
     Mostly for test purposes, you can specify the most recent data you'd
     like to collect, instead of defaulting to the present.
 
@@ -48,8 +48,9 @@ def stock_url(stock_symbol, day=None, month=None, year=None):
     # print(page)
     return(page)
 
+
 def stock_download(stock_symbol, day=None, month=None, year=None):
-    """Download the stock history into a CSV file.
+    """ Download the stock history into a CSV file.
 
     File is rows of: 
     date, open, high, low, close, volume and adjusted close
@@ -80,8 +81,17 @@ def stock_download(stock_symbol, day=None, month=None, year=None):
             f.write(line + "\n")
     f.close()
 
+
 def download_all():
-    #stock_download('aapl')
+    """ Download data for each of the stocks in the stock_symbols.txt file
+
+    Each stock is read and the data is stored in <symbol>.csv
+    The stocks_read.txt file is updated with each symbol.
+
+    >>> download_all() #doctest: +ELLIPSIS
+    ../data/...
+
+    """
     f = open('stock_symbols.txt', 'r')
     fout = open('../data/stocks_read.txt', 'w')
     count_max = 3
