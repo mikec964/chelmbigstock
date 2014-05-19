@@ -21,6 +21,9 @@ def stock_url(stock_symbol, day=None, month=None, year=None):
     >>> stock_url('IBM', 31, 1, 2013)
     'http://ichart.finance.yahoo.com/table.csv?s=IBM&amp;d=1&amp;e=31&amp;f=2013&amp;g=d&amp;a=1&amp;b=1&amp;c=1960&amp;ignore=.csv'
 
+    >>> stock_url('IBM') #doctest: +ELLIPSIS
+    'http://ichart.finance.yahoo.com/table.csv?s=IBM...
+
     """
 
     page = "http://ichart.finance.yahoo.com/table.csv?"
@@ -45,13 +48,18 @@ def stock_url(stock_symbol, day=None, month=None, year=None):
     # print(page)
     return(page)
 
-def stock_download(stock_symbol):
+def stock_download(stock_symbol, day=None, month=None, year=None):
     """Download the stock history into a CSV file.
 
-    File is rows of: date, open, high, low, close, volume and adjusted close
+    File is rows of: 
+    date, open, high, low, close, volume and adjusted close
+
+    >>> stock_download('IBM')
+    ../data/IBM.csv
+
     """
 
-    page = stock_url(stock_symbol)
+    page = stock_url(stock_symbol, day, month, year)
     response = request.urlopen(page)
     csv = response.read()
 
