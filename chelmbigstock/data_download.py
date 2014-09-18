@@ -59,7 +59,7 @@ def main():
     #stock_download('aapl')
     f = open('stock_symbols.txt', 'r')
     fout = open('../data/stocks_read.txt', 'w')
-    count_max = 3
+    count_max = 30
     count = 0
     for stock_symbol in f:
         stock_symbol = stock_symbol.strip()
