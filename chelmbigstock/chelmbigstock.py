@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # A python script to learn about stock picking
+import sys
 
 from operator import itemgetter
 
@@ -11,9 +12,9 @@ import dateutil
 from Stock import Stock
 from LearningData import LearningData
 
-def main():
-    
-    max_stocks = 30
+def construct(max_stocks, future_day):
+    """ This function constructs the training, testing and cross validation
+        objects for the stock market analysis """
     stocks = Stock.read_stocks('../data/stocks_read.txt', max_stocks)
     stocks_train = []
     stocks_cv = []
@@ -24,21 +25,72 @@ def main():
         else:
             stocks_cv.append(stock)
         count = count + 1
-
+    
     training_data = LearningData()
     cv_data = LearningData()
     
     day_history = []
-    for i in range(5, 101, 5):
+    for i in range(5, 21, 5):
         day_history.append(i)
         
     reference_date = dateutil.days_since_1900('1980-01-01')
-    training_data.construct(stocks_train,[reference_date, day_history, 25])
-    cv_data.construct(stocks_cv,[reference_date, day_history, 25])
+    training_data.construct(stocks_train,[reference_date, day_history, future_day])
+    cv_data.construct(stocks_cv,[reference_date, day_history, future_day])
     
     reference_date = dateutil.days_since_1900('1981-01-01')
-    training_data.append(stocks_train,[reference_date, day_history, 25])
-    cv_data.append(stocks_cv,[reference_date, day_history, 25])
+    training_data.append(stocks_train,[reference_date, day_history, future_day])
+    cv_data.append(stocks_cv,[reference_date, day_history, future_day])
+    
+    return training_data, cv_data
+
+def output(training_data, cv_data):
+    " This function outputs the data in csv form so it can be examined in Matlab"
+    
+    f = open('training_x.txt','w')
+    for i in range(0,training_data.m):
+        x_str = ','.join(str(x) for x in training_data.X[i])
+        print(x_str)
+        f.write(x_str + '\n')
+    f.close
+    
+    f = open('training_y.txt','w')
+    y_str = ','.join(str(y) for y in training_data.y)
+    f.write(y_str)
+    f.close
+    
+    f = open('cv_x.txt','w')
+    for i in range(0,cv_data.m):
+        x_str = ','.join(str(x) for x in cv_data.X[i])
+        print(x_str)
+        f.write(x_str + '\n')
+    f.close
+    
+    f = open('cv_y.txt','w')
+    y_str = ','.join(str(y) for y in cv_data.y)
+    f.write(y_str)
+    f.close
+
+def main(argv):
+    
+    max_stocks = 30
+    future_day = 25
+    print("the length of argv is ", len(argv))
+    for i in range(0,len(argv)):
+        print(" this argument is ", i, argv[i])
+        if argv[i] == '-max':
+            max_stocks = argv[i+1]
+        if argv[i] == '-future':
+            future_day = argv[i+1]
+        if argv[i] == '-start':
+            start_dates = argv[i+1]
+            print("start_dates = ", start_dates)
+            start_list = start_dates.split(',')
+            print("start_list = ", start_list)
+    print("max_stocks = ", max_stocks)
+    
+    training_data, cv_data = construct(max_stocks, future_day)
+    
+    output(training_data, cv_data)
     
     """reference_date = dateutil.days_since_1900('1981-01-01')
     training_data.append(stocks_train,[reference_date, [50, 100, 150], 50])
@@ -98,8 +150,8 @@ def main():
     investing_data = LearningData()
     
     # Construct an LearningData set
-    reference_date = dateutil.days_since_1900('1984-01-01')
-    i_day = dateutil.find_ref_date_idx(stocks[0], reference_date)
+  #  reference_date = dateutil.days_since_1900('1984-01-01')
+  #  i_day = dateutil.find_ref_date_idx(stocks[0], reference_date)
   #  print (i_day, stocks[0].dates[i_day] )
     """ f = open('value.txt', 'w')
     
@@ -122,4 +174,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
