@@ -2,5 +2,5 @@
 TextInputFormat module for Hadoop stream API emulator
 """
 
-for i in xrange(100):
-	print i
+for i in xrange(5):
+    print i
