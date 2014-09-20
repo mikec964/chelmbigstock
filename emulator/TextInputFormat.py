@@ -10,12 +10,12 @@ def get_file_list(path):
     Arguments:
         path: file name or directory name
     Return:
-        If path is a file, return a list with the path.
-        If path is a directory, return a list of files in the directory.
-        if path is an invalid path or an empty path, return an empty list.
+        If path is a file, returns a list with the path.
+        If path is a directory, returns a list of files in the directory.
+        if path is an invalid path, returns None
     """
     if not os.path.exists(path):
-        return []
+        return None
     elif os.path.isfile(path):
         return [path]
     else:
@@ -31,7 +31,9 @@ def send_to_mapper(f_list):
     for fn in f_list:
         with open(fn, 'r') as fh:
             for line in fh:
-                print line,
+                print line.strip()
 
 file_list = get_file_list(sys.argv[1])
+if file_list == None:
+    sys.exit(1)
 send_to_mapper(file_list)

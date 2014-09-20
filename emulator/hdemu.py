@@ -7,6 +7,7 @@ Hadoop stream API emulator for python mapper/reducer
 import os
 import sys
 import subprocess as sp
+import tempfile as tf
 
 
 def analyze_argv(argv):
@@ -56,16 +57,16 @@ def analyze_argv(argv):
             state = sts_init
             for arg in iter_argv:
                 if state == sts_mapper:
-                    self._mapper = arg
+                    self._mapper = os.path.abspath(arg)
                     state = sts_init
                 elif state == sts_reducer:
-                    self._reducer = arg
+                    self._reducer = os.path.abspath(arg)
                     state = sts_init
                 elif state == sts_input:
-                    self._input_path = arg
+                    self._input_path = os.path.abspath(arg)
                     state = sts_init
                 elif state == sts_output:
-                    self._output_path = arg
+                    self._output_path = os.path.abspath(arg)
                     state = sts_init
                 else:
                     state = sts_from_arg(arg)
@@ -102,27 +103,32 @@ def analyze_argv(argv):
     return CommandLineArguments(argv)
 
 
-def run_pipeline(commands):
+#
+# Hadoop Stream API Emulator
+#
+# first, exception definitions
+
+class HSEException(Exception):
     """
-    Runs commands and connects the stdout of a command with the stdin of the next.
-    Arguments:
-        commands: list of command. command is the same format as the 'args' argument
-        of subprocess.Popen().
-    Return:
-        List of processes
+    Base exception class for HadoopStreamEnulator class
     """
-    previous_p = None
-    ps = []
-    for command in commands:
-        next_stdin = None if previous_p == None else previous_p.stdout
-        p = sp.Popen(command, stdin = next_stdin, stdout = sp.PIPE)
-        ps.append(p)
-        if previous_p:
-            previous_p.stdout.close()   # Allow previouse process to receive a SIGPIPE
-                                        # if current process exits.
-        previous_p = p
-    
-    return ps
+    pass
+
+
+class HSEInputFormatterError(HSEException):
+    """
+    Raised when input formatter reported an error
+    """
+    def __init__(self, msg):
+        self.msg = msg
+
+
+class HSEMapperError(HSEException):
+    """
+    Raised when mapper reported an error
+    """
+    def __init__(self, msg):
+        self.msg = msg
 
 
 class HadoopStreamEmulator(object):
@@ -151,18 +157,31 @@ class HadoopStreamEmulator(object):
         """
         execute MapReduce job
         """
-        commands = [
-                [ self._my_python, os.path.join(self._my_path, 'TextInputFormat.py'), self._input_path ],
-                [ self._my_python, os.path.join(self._my_path, 'Shuffle.py') ]
-            ]
-        ps = run_pipeline(commands)
-        output = ps[-1].stdout
-        for line in output:
-            print line,
+        with tf.TemporaryFile() as f_sh:
+            command = [ self._my_python, os.path.join(self._my_path, 'TextInputFormat.py'), self._input_path ]
+            p_input = sp.Popen(command, stdout = sp.PIPE)
+
+            command = [ self._my_python, os.path.join(self._my_path, self._mapper) ]
+            p_mapper = sp.Popen(command, stdin = p_input.stdout, stdout = f_sh)
+            p_input.stdout.close()   # Allow input process to receive a SIGPIPE,
+                                 # if mapper process exits.
+            p_mapper.wait()
+            p_input.wait()
+            if p_input.returncode != 0:
+                raise HSEInputFormatterError('Failed to read {}, return code={}: quit'.format(self._input_path, p_input.returncode))
+            if p_mapper.returncode != 0:
+                raise HSEMapperError('Mapper {} returned error: quit'.format(self._mapper))
+            f_sh.seek(0)
+            for line in f_sh:
+                print line,
 
 
 # analyze command line arguments
 emuopt = analyze_argv(sys.argv)
+print 'Mapper={}'.format(emuopt.mapper)
+print 'Reducer={}'.format(emuopt.reducer)
+print 'Input path={}'.format(emuopt.input_path)
+print 'Output path={}'.format(emuopt.output_path)
 emulator = HadoopStreamEmulator(
     emuopt.emulator_path,
     emuopt.mapper, emuopt.reducer,
