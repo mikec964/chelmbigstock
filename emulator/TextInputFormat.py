@@ -2,5 +2,36 @@
 TextInputFormat module for Hadoop stream API emulator
 """
 
-for i in xrange(5):
-    print i
+import os
+import sys
+
+def get_file_list(path):
+    """
+    Arguments:
+        path: file name or directory name
+    Return:
+        If path is a file, return a list with the path.
+        If path is a directory, return a list of files in the directory.
+        if path is an invalid path or an empty path, return an empty list.
+    """
+    if not os.path.exists(path):
+        return []
+    elif os.path.isfile(path):
+        return [path]
+    else:
+        lists = []
+        for a_file in os.listdir(path):
+            a_path = os.path.join(path, a_file)
+            if os.path.isfile(a_path):
+                lists.append(a_path)
+        return lists
+
+
+def send_to_mapper(f_list):
+    for fn in f_list:
+        with open(fn, 'r') as fh:
+            for line in fh:
+                print line,
+
+file_list = get_file_list(sys.argv[1])
+send_to_mapper(file_list)

@@ -26,7 +26,7 @@ def analyze_argv(argv):
         """
         def __init__(self, argv):
             # default values
-            self._python_exe = 'python'
+            self._python_path = 'python'
             
             # the file path to this emulator
             iter_argv = iter(argv)
@@ -76,8 +76,8 @@ def analyze_argv(argv):
             self._emulator_path = os.path.dirname(os.path.abspath(arg))
         
         @property
-        def python_exe(self):
-            return self._python_exe
+        def python_path(self):
+            return self._python_path
         
         @property
         def emulator_path(self):
@@ -125,15 +125,48 @@ def run_pipeline(commands):
     return ps
 
 
+class HadoopStreamEmulator(object):
+    """
+    Mimics the behavior of the Hadoop stream API.
+    """
+    def __init__(self, emu_path, mapper, reducer, input_path, output_path, user_python = 'python'):
+        """
+        Parameters:
+            emu_path: the home directory of the emulator
+            mapper:   the path to a mapper script in Python
+            reducer:  the path to a reducer script in Python
+            input_path:  the file name or directory of input data
+            output_path: the directory to store result
+            user_python: the path to the python interpreter for mapper/reducer
+        """
+        self._my_python = 'python'
+        self._my_path = emu_path
+        self._mapper = mapper
+        self._reducer = reducer
+        self._input_path = input_path
+        self._output_path = output_path
+        self._user_python = user_python
+
+    def execute(self):
+        """
+        execute MapReduce job
+        """
+        commands = [
+                [ self._my_python, os.path.join(self._my_path, 'TextInputFormat.py'), self._input_path ],
+                [ self._my_python, os.path.join(self._my_path, 'Shuffle.py') ]
+            ]
+        ps = run_pipeline(commands)
+        output = ps[-1].stdout
+        for line in output:
+            print line,
+
+
 # analyze command line arguments
 emuopt = analyze_argv(sys.argv)
-
-commands = [
-    ['python', os.path.join(emuopt.emulator_path, 'TextInputFormat.py')],
-    ['python', os.path.join(emuopt.emulator_path, 'Shuffle.py')]
-    ]
-
-ps = run_pipeline(commands)
-output = ps[-1].stdout
-for line in output:
-    print line,
+emulator = HadoopStreamEmulator(
+    emuopt.emulator_path,
+    emuopt.mapper, emuopt.reducer,
+    emuopt.input_path, emuopt.output_path,
+    emuopt.python_path
+    )
+emulator.execute()
