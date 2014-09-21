@@ -170,7 +170,7 @@ class HadoopStreamEmulator(object):
             user_python: the path to the python interpreter for mapper/reducer
         """
         if os.path.exists(output_path):
-            raise HSEOutputPathError("Output path '{}' already exists".format(output_paty))
+            raise HSEOutputPathError("Output path '{}' already exists".format(output_path))
 
         self._my_python = 'python'
         self._my_path = emu_path
@@ -187,9 +187,56 @@ class HadoopStreamEmulator(object):
         Argument:
             fh: file handle of the mapper result
         """
+        print '**** shuffling ****'
         kv_list = [ line.strip().split(self._kv_separator, 1) for line in fh ]
         kv_list.sort(cmp = lambda l, r : cmp(l[0], r[0]))
         return kv_list
+
+    def call_mapper(self, f_out):
+        """
+        Calls mapper and stores the result in a temp file for shuffling
+        """
+        print '**** mapping ****'
+        command = [ self._my_python, os.path.join(self._my_path, 'TextInputFormat.py'), self._input_path ]
+        p_input = sp.Popen(command, stdout = sp.PIPE)
+
+        command = [ self._my_python, self._mapper ]
+        p_mapper = sp.Popen(command, stdin = p_input.stdout, stdout = f_out)
+        p_input.stdout.close()   # Allow input process to receive a SIGPIPE,
+                                 # if mapper process exits.
+        p_mapper.wait()
+        p_input.wait()
+        if p_input.returncode != 0:
+            raise HSEInputFormatterError('Failed to read {}, return code={}: quit'.format(self._input_path, p_input.returncode))
+        if p_mapper.returncode != 0:
+            raise HSEMapperError('Mapper {} returned error: quit'.format(self._mapper))
+
+    def call_reducer(self, f_in, kv_list):
+        """
+        Calls reducer and stores the result in the 'output' dir
+        """
+        print '**** reducing ****'
+        for kv in kv_list:
+            if len(kv) == 1:
+                print >> f_in, kv[0]
+            else:
+                print >> f_in, '{}\t{}'.format(kv[0], kv[1])
+        f_in.seek(0)
+
+        command = [ self._my_python, self._reducer ]
+        p_reducer = sp.Popen(command, stdin = f_in, stdout = sp.PIPE)
+
+        command = [ self._my_python, os.path.join(self._my_path, 'TextOutputFormat.py'), self._output_path ]
+        p_output = sp.Popen(command, stdin = p_reducer.stdout)
+        p_reducer.stdout.close()
+
+        p_output.wait()
+        p_reducer.wait()
+
+        if p_reducer.returncode != 0:
+            raise HSEReducerError('Reducer {} returned error: quit'.format(self._reducer))
+        if p_output.returncode != 0:
+            raise HSEOutputFormatterError('Failed to write {}, return code={}: quit'.format(self._output_path, p_output.returncode))
 
     def execute(self):
         """
@@ -197,59 +244,35 @@ class HadoopStreamEmulator(object):
         """
         # mapper
         with tf.TemporaryFile() as f_m:
-            command = [ self._my_python, os.path.join(self._my_path, 'TextInputFormat.py'), self._input_path ]
-            p_input = sp.Popen(command, stdout = sp.PIPE)
-
-            command = [ self._my_python, self._mapper ]
-            p_mapper = sp.Popen(command, stdin = p_input.stdout, stdout = f_m)
-            p_input.stdout.close()   # Allow input process to receive a SIGPIPE,
-                                 # if mapper process exits.
-            p_mapper.wait()
-            p_input.wait()
-            if p_input.returncode != 0:
-                raise HSEInputFormatterError('Failed to read {}, return code={}: quit'.format(self._input_path, p_input.returncode))
-            if p_mapper.returncode != 0:
-                raise HSEMapperError('Mapper {} returned error: quit'.format(self._mapper))
-
+            self.call_mapper(f_m)
             # shuffling
             f_m.seek(0)
             kv_list = self.shuffle(f_m)
 
         # reducer
         with tf.TemporaryFile() as f_r:
-            for kv in kv_list:
-                if len(kv) == 1:
-                    print >> f_r, kv[0]
-                else:
-                    print >> f_r, '{}\t{}'.format(kv[0], kv[1])
-            f_r.seek(0)
+            self.call_reducer(f_r, kv_list)
 
-            command = [ self._my_python, self._reducer ]
-            p_reducer = sp.Popen(command, stdin = f_r, stdout = sp.PIPE)
+        print '**** mapreduce job completed ****'
 
-            command = [ self._my_python, os.path.join(self._my_path, 'TextOutputFormat.py'), self._output_path ]
-            p_output = sp.Popen(command, stdin = p_reducer.stdout)
-            p_reducer.stdout.close()
 
-            p_output.wait()
-            p_reducer.wait()
-
-            if p_reducer.returncode != 0:
-                raise HSEReducerError('Reducer {} returned error: quit'.format(self._reducer))
-            if p_output.returncode != 0:
-                raise HSEOutputFormatterError('Failed to write {}, return code={}: quit'.format(self._output_path, p_output.returncode))
-
+# Hadoop Streaming API emulator for pythong script
+# main
 
 # analyze command line arguments
 emuopt = analyze_argv(sys.argv)
-print 'Mapper={}'.format(emuopt.mapper)
-print 'Reducer={}'.format(emuopt.reducer)
-print 'Input path={}'.format(emuopt.input_path)
-print 'Output path={}'.format(emuopt.output_path)
-emulator = HadoopStreamEmulator(
-    emuopt.emulator_path,
-    emuopt.mapper, emuopt.reducer,
-    emuopt.input_path, emuopt.output_path,
-    emuopt.python_path
-    )
-emulator.execute()
+print 'Mapper     : {}'.format(emuopt.mapper)
+print 'Reducer    : {}'.format(emuopt.reducer)
+print 'Input path : {}'.format(emuopt.input_path)
+print 'Output path: {}'.format(emuopt.output_path)
+
+try:
+    emulator = HadoopStreamEmulator(
+        emuopt.emulator_path,
+        emuopt.mapper, emuopt.reducer,
+        emuopt.input_path, emuopt.output_path,
+        emuopt.python_path
+        )
+    emulator.execute()
+except HSEException as e:
+    print >> sys.stderr, '!!!! ERROR !!!! {}'.format(e.msg)
