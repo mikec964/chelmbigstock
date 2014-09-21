@@ -123,9 +123,33 @@ class HSEInputFormatterError(HSEException):
         self.msg = msg
 
 
+class HSEOutputFormatterError(HSEException):
+    """
+    Raised when output formatter reported an error
+    """
+    def __init__(self, msg):
+        self.msg = msg
+
+
 class HSEMapperError(HSEException):
     """
     Raised when mapper reported an error
+    """
+    def __init__(self, msg):
+        self.msg = msg
+
+
+class HSEReducerError(HSEException):
+    """
+    Raised when reducer reported an error
+    """
+    def __init__(self, msg):
+        self.msg = msg
+
+
+class HSEOutputPathError(HSEException):
+    """
+    Raised when output path already exists
     """
     def __init__(self, msg):
         self.msg = msg
@@ -145,6 +169,9 @@ class HadoopStreamEmulator(object):
             output_path: the directory to store result
             user_python: the path to the python interpreter for mapper/reducer
         """
+        if os.path.exists(output_path):
+            raise HSEOutputPathError("Output path '{}' already exists".format(output_paty))
+
         self._my_python = 'python'
         self._my_path = emu_path
         self._mapper = mapper
@@ -152,17 +179,29 @@ class HadoopStreamEmulator(object):
         self._input_path = input_path
         self._output_path = output_path
         self._user_python = user_python
+        self._kv_separator = '\t'
+
+    def shuffle(self, fh):
+        """
+        Shuffles the result of mapper.
+        Argument:
+            fh: file handle of the mapper result
+        """
+        kv_list = [ line.strip().split(self._kv_separator, 1) for line in fh ]
+        kv_list.sort(cmp = lambda l, r : cmp(l[0], r[0]))
+        return kv_list
 
     def execute(self):
         """
         execute MapReduce job
         """
-        with tf.TemporaryFile() as f_sh:
+        # mapper
+        with tf.TemporaryFile() as f_m:
             command = [ self._my_python, os.path.join(self._my_path, 'TextInputFormat.py'), self._input_path ]
             p_input = sp.Popen(command, stdout = sp.PIPE)
 
-            command = [ self._my_python, os.path.join(self._my_path, self._mapper) ]
-            p_mapper = sp.Popen(command, stdin = p_input.stdout, stdout = f_sh)
+            command = [ self._my_python, self._mapper ]
+            p_mapper = sp.Popen(command, stdin = p_input.stdout, stdout = f_m)
             p_input.stdout.close()   # Allow input process to receive a SIGPIPE,
                                  # if mapper process exits.
             p_mapper.wait()
@@ -171,9 +210,34 @@ class HadoopStreamEmulator(object):
                 raise HSEInputFormatterError('Failed to read {}, return code={}: quit'.format(self._input_path, p_input.returncode))
             if p_mapper.returncode != 0:
                 raise HSEMapperError('Mapper {} returned error: quit'.format(self._mapper))
-            f_sh.seek(0)
-            for line in f_sh:
-                print line,
+
+            # shuffling
+            f_m.seek(0)
+            kv_list = self.shuffle(f_m)
+
+        # reducer
+        with tf.TemporaryFile() as f_r:
+            for kv in kv_list:
+                if len(kv) == 1:
+                    print >> f_r, kv[0]
+                else:
+                    print >> f_r, '{}\t{}'.format(kv[0], kv[1])
+            f_r.seek(0)
+
+            command = [ self._my_python, self._reducer ]
+            p_reducer = sp.Popen(command, stdin = f_r, stdout = sp.PIPE)
+
+            command = [ self._my_python, os.path.join(self._my_path, 'TextOutputFormat.py'), self._output_path ]
+            p_output = sp.Popen(command, stdin = p_reducer.stdout)
+            p_reducer.stdout.close()
+
+            p_output.wait()
+            p_reducer.wait()
+
+            if p_reducer.returncode != 0:
+                raise HSEReducerError('Reducer {} returned error: quit'.format(self._reducer))
+            if p_output.returncode != 0:
+                raise HSEOutputFormatterError('Failed to write {}, return code={}: quit'.format(self._output_path, p_output.returncode))
 
 
 # analyze command line arguments

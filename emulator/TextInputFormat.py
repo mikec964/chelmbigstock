@@ -5,6 +5,12 @@ TextInputFormat module for Hadoop stream API emulator
 import os
 import sys
 
+# exit codes
+ERR_NO_ERR = 0
+ERR_NO_DIR_GIVEN = 1
+ERR_DIR_NOT_EXISTS = 2
+ERR_FAILED_TO_READ = 3
+
 def get_file_list(path):
     """
     Arguments:
@@ -28,12 +34,26 @@ def get_file_list(path):
 
 
 def send_to_mapper(f_list):
+    """
+    Reads data and send it to mapper through stdout
+    """
     for fn in f_list:
         with open(fn, 'r') as fh:
             for line in fh:
                 print line.strip()
 
+
+# get list of files
 file_list = get_file_list(sys.argv[1])
 if file_list == None:
-    sys.exit(1)
-send_to_mapper(file_list)
+    sys.exit(ERR_DIR_NOT_EXISTS)
+
+# send data to mapper
+try:
+    send_to_mapper(file_list)
+except:
+    ret_val = ERR_FAILED_TO_READ
+else:
+    ret_val = ERR_NO_ERR
+
+sys.exit(ret_val)
