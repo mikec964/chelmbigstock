@@ -188,7 +188,13 @@ class HadoopStreamEmulator(object):
             fh: file handle of the mapper result
         """
         print '**** shuffling ****'
-        kv_list = [ line.strip().split(self._kv_separator, 1) for line in fh ]
+        kv_list = []
+        for line in fh:
+            a_pair = line.strip().split(self._kv_separator, 1)
+            # if a pair doesn't have value, just remove it
+            if len(a_pair) != 2:
+                continue
+            kv_list.append(a_pair)
         kv_list.sort(cmp = lambda l, r : cmp(l[0], r[0]))
         return kv_list
 
