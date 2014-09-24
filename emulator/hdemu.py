@@ -2,6 +2,9 @@
 
 """
 Hadoop stream API emulator for python mapper/reducer
+
+@Author: Hideki Ikeda
+Created: September 19, 2014
 """
 
 import os

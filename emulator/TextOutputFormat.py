@@ -1,5 +1,8 @@
 """
 TextOutputFormat module for Hadoop stream API emulator
+
+@Author: Hideki Ikeda
+Created: September 19, 2014
 """
 
 import os
