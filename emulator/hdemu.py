@@ -270,7 +270,7 @@ def is_script_ok(fn_script):
     """
     with open(fn_script, 'r') as fh:
         first = fh.readline()
-        if first != _The_first_line:
+        if first[0] != '#' or first.strip() != _The_first_line:
             print >> sys.stderr, "!!!! WARNING !!!! {} dosn't start with '{}'".format(fn_script, _The_first_line)
 
 
