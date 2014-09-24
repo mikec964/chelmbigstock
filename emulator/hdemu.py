@@ -262,6 +262,32 @@ class HadoopStreamEmulator(object):
         print '**** mapreduce job completed ****'
 
 
+_The_first_line = '#!/usr/bin/env python'
+def is_script_ok(fn_script):
+    """
+    Make sure a python script exists and it starts with
+    #!/usr/bin/env python
+    """
+    with open(fn_script, 'r') as fh:
+        first = fh.readline()
+        if first != _The_first_line:
+            print >> sys.stderr, "!!!! WARNING !!!! {} dosn't start with '{}'".format(fn_script, _The_first_line)
+
+
+def check_mr(fn_mapper, fn_reducer):
+    """
+    make sure a mapper and reducer is value
+    """
+    try:
+        is_script_ok(fn_mapper)
+    except IOError:
+        raise HSEMapperError("Mapper {} doesn't exist: quit".format(fn_mapper))
+    try:
+        is_script_ok(fn_reducer)
+    except IOError:
+        raise HSEReducerError("Reducer {} doesn't exist: quit".format(fn_reducer))
+
+
 # Hadoop Streaming API emulator for pythong script
 # main
 
@@ -273,6 +299,7 @@ print 'Input path : {}'.format(emuopt.input_path)
 print 'Output path: {}'.format(emuopt.output_path)
 
 try:
+    check_mr(emuopt.mapper, emuopt.reducer)
     emulator = HadoopStreamEmulator(
         emuopt.emulator_path,
         emuopt.mapper, emuopt.reducer,
