@@ -13,6 +13,10 @@ import subprocess as sp
 import tempfile as tf
 
 
+def is_special_reducer(fn_reducer):
+    return (fn_reducer == 'aggregate')
+
+
 def analyze_argv(argv):
     """
     Analyzes command line arguments.
@@ -63,7 +67,7 @@ def analyze_argv(argv):
                     self._mapper = os.path.abspath(arg)
                     state = sts_init
                 elif state == sts_reducer:
-                    self._reducer = os.path.abspath(arg)
+                    self._reducer = arg if is_special_reducer(arg) else os.path.abspath(arg)
                     state = sts_init
                 elif state == sts_input:
                     self._input_path = os.path.abspath(arg)
@@ -232,7 +236,10 @@ class HadoopStreamEmulator(object):
                 print >> f_in, '{}\t{}'.format(kv[0], kv[1])
         f_in.seek(0)
 
-        command = [ self._my_python, self._reducer ]
+        if self._reducer == 'aggregate':
+            command = [ self._my_python, os.path.join(self._my_path, 'aggregate.py') ]
+        else:
+            command = [ self._my_python, self._reducer ]
         p_reducer = sp.Popen(command, stdin = f_in, stdout = sp.PIPE)
 
         command = [ self._my_python, os.path.join(self._my_path, 'TextOutputFormat.py'), self._output_path ]
@@ -286,7 +293,8 @@ def check_mr(fn_mapper, fn_reducer):
     except IOError:
         raise HSEMapperError("Mapper {} doesn't exist: quit".format(fn_mapper))
     try:
-        is_script_ok(fn_reducer)
+        if not is_special_reducer(fn_reducer):
+            is_script_ok(fn_reducer)
     except IOError:
         raise HSEReducerError("Reducer {} doesn't exist: quit".format(fn_reducer))
 
