@@ -6,6 +6,8 @@ The aggregate reducer module
 Created: September 26, 2014
 """
 
+from __future__ import print_function
+
 import sys
 
 
@@ -94,7 +96,7 @@ def main():
     last_key = None
 
     def emitter(value):
-        print '{}\t{}'.format(last_key, value)
+        print('{}\t{}'.format(last_key, value))
 
     for line in sys.stdin:
         aggre_key, value = line.strip().split('\t', 1)

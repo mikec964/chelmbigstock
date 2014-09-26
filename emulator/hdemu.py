@@ -7,6 +7,8 @@ Hadoop stream API emulator for python mapper/reducer
 Created: September 19, 2014
 """
 
+from __future__ import print_function
+
 import os
 import sys
 import subprocess as sp
@@ -38,7 +40,7 @@ def analyze_argv(argv):
             
             # the file path to this emulator
             iter_argv = iter(argv)
-            self._set_emulator_path(iter_argv.next())
+            self._set_emulator_path(next(iter_argv))
             
             # state definitions
             sts_init = 0
@@ -78,7 +80,7 @@ def analyze_argv(argv):
                 else:
                     state = sts_from_arg(arg)
                     if state == sts_init:
-                        print >> sys.stderr, "Unknown argument '{}': ignored".format(arg)
+                        print("Unknown argument '{}': ignored".format(arg), file=sys.stderr)
         
         def _set_emulator_path(self, arg):
             self._emulator_path = os.path.dirname(os.path.abspath(arg))
@@ -194,7 +196,7 @@ class HadoopStreamEmulator(object):
         Argument:
             fh: file handle of the mapper result
         """
-        print '**** shuffling ****'
+        print('**** shuffling ****')
         kv_list = []
         for line in fh:
             a_pair = line.strip().split(self._kv_separator, 1)
@@ -202,18 +204,18 @@ class HadoopStreamEmulator(object):
             if len(a_pair) != 2:
                 continue
             kv_list.append(a_pair)
-        kv_list.sort(cmp = lambda l, r : cmp(l[0], r[0]))
+        kv_list.sort(key = lambda l: l[0])
         return kv_list
 
     def call_mapper(self, f_out):
         """
         Calls mapper and stores the result in a temp file for shuffling
         """
-        print '**** mapping ****'
+        print('**** mapping ****')
         command = [ self._my_python, os.path.join(self._my_path, 'TextInputFormat.py'), self._input_path ]
         p_input = sp.Popen(command, stdout = sp.PIPE)
 
-        command = [ self._my_python, self._mapper ]
+        command = [ self._user_python, self._mapper ]
         p_mapper = sp.Popen(command, stdin = p_input.stdout, stdout = f_out)
         p_input.stdout.close()   # Allow input process to receive a SIGPIPE,
                                  # if mapper process exits.
@@ -228,18 +230,18 @@ class HadoopStreamEmulator(object):
         """
         Calls reducer and stores the result in the 'output' dir
         """
-        print '**** reducing ****'
+        print('**** reducing ****')
         for kv in kv_list:
             if len(kv) == 1:
-                print >> f_in, kv[0]
+                print(kv[0], file=f_in)
             else:
-                print >> f_in, '{}\t{}'.format(kv[0], kv[1])
+                print('{}\t{}'.format(kv[0], kv[1]), file=f_in)
         f_in.seek(0)
 
         if self._reducer == 'aggregate':
             command = [ self._my_python, os.path.join(self._my_path, 'aggregate.py') ]
         else:
-            command = [ self._my_python, self._reducer ]
+            command = [ self._user_python, self._reducer ]
         p_reducer = sp.Popen(command, stdin = f_in, stdout = sp.PIPE)
 
         command = [ self._my_python, os.path.join(self._my_path, 'TextOutputFormat.py'), self._output_path ]
@@ -259,20 +261,20 @@ class HadoopStreamEmulator(object):
         execute MapReduce job
         """
         # mapper
-        with tf.TemporaryFile() as f_m:
+        with tf.TemporaryFile(mode='w+') as f_m:
             self.call_mapper(f_m)
             # shuffling
             f_m.seek(0)
             kv_list = self.shuffle(f_m)
 
         # reducer
-        with tf.TemporaryFile() as f_r:
+        with tf.TemporaryFile(mode='w+') as f_r:
             self.call_reducer(f_r, kv_list)
 
-        print '**** mapreduce job completed ****'
+        print('**** mapreduce job completed ****')
 
 
-_The_first_line = '#!/usr/bin/env python'
+_The_first_lines = [ '#!/usr/bin/env python', '#!/usr/bin/env python3' ]
 def is_script_ok(fn_script):
     """
     Make sure a python script exists and it starts with
@@ -280,8 +282,10 @@ def is_script_ok(fn_script):
     """
     with open(fn_script, 'r') as fh:
         first = fh.readline()
-        if first[0] != '#' or first.strip() != _The_first_line:
-            print >> sys.stderr, "!!!! WARNING !!!! {} dosn't start with '{}'".format(fn_script, _The_first_line)
+        if first[0] != '#' or not first.strip() in _The_first_lines:
+            print("!!!! WARNING !!!! {} dosn't start with one of:".format(fn_script), file=sys.stderr)
+            for cmd in _The_first_lines:
+                print('\t{}'.format(cmd))
 
 
 def check_mr(fn_mapper, fn_reducer):
@@ -299,15 +303,17 @@ def check_mr(fn_mapper, fn_reducer):
         raise HSEReducerError("Reducer {} doesn't exist: quit".format(fn_reducer))
 
 
-# Hadoop Streaming API emulator for pythong script
+# Hadoop Streaming API emulator for python script
 # main
 
 # analyze command line arguments
 emuopt = analyze_argv(sys.argv)
-print 'Mapper     : {}'.format(emuopt.mapper)
-print 'Reducer    : {}'.format(emuopt.reducer)
-print 'Input path : {}'.format(emuopt.input_path)
-print 'Output path: {}'.format(emuopt.output_path)
+print('System     : {}'.format(sys.version))
+print('python cmd : {}'.format(emuopt.python_path))
+print('Mapper     : {}'.format(emuopt.mapper))
+print('Reducer    : {}'.format(emuopt.reducer))
+print('Input path : {}'.format(emuopt.input_path))
+print('Output path: {}'.format(emuopt.output_path))
 
 try:
     check_mr(emuopt.mapper, emuopt.reducer)
@@ -319,4 +325,4 @@ try:
         )
     emulator.execute()
 except HSEException as e:
-    print >> sys.stderr, '!!!! ERROR !!!! {}'.format(e.msg)
+    print('!!!! ERROR !!!! {}'.format(e.msg), file=sys.stderr)

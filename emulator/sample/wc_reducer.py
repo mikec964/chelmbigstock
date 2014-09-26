@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import sys
 
 def emit(word, count):
-    print '{}\t{}'.format(word, count)
+    print('{}\t{}'.format(word, count))
 
 def main():
     last_word = None

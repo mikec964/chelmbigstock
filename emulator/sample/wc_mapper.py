@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import sys
 import re
 
@@ -8,7 +10,7 @@ def main():
 
     for line in sys.stdin:
         for word in pattern.findall(line):
-            print '{}\t{}'.format(word.lower(), 1)
+            print('{}\t{}'.format(word.lower(), 1))
 
 if __name__ == '__main__':
     main()

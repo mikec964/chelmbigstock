@@ -5,6 +5,8 @@ TextInputFormat module for Hadoop stream API emulator
 Created: September 19, 2014
 """
 
+from __future__ import print_function
+
 import os
 import sys
 
@@ -43,7 +45,7 @@ def send_to_mapper(f_list):
     for fn in f_list:
         with open(fn, 'r') as fh:
             for line in fh:
-                print line.strip()
+                print(line.strip())
 
 
 # get list of files

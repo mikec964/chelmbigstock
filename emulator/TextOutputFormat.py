@@ -5,6 +5,8 @@ TextOutputFormat module for Hadoop stream API emulator
 Created: September 19, 2014
 """
 
+from __future__ import print_function
+
 import os
 import sys
 
@@ -19,7 +21,7 @@ def text_output(out_dir):
     fn_result = os.path.join(out_dir, 'part-00000')
     with open(fn_result, 'w') as fh_result:
         for line in sys.stdin:
-            print >> fh_result, line,
+            print(line, end='', file=fh_result)
 
     # everything went well; make _SUCCESS
     fn_success = os.path.join(out_dir, '_SUCCESS')
