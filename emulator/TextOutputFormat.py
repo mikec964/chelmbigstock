@@ -8,19 +8,13 @@ Created: September 19, 2014
 from __future__ import print_function
 
 import os
-import sys
+from hseexceptions import HSEOutputPathError
 
-# exit codes
-ERR_NO_ERR = 0
-ERR_NO_DIR_GIVEN = 1
-ERR_DIR_ALREADY_EXISTS = 2
-ERR_FAILED_TO_WRITE = 3
-
-def text_output(out_dir):
+def text_output(f_in, out_dir):
     # copy stdin to result file
     fn_result = os.path.join(out_dir, 'part-00000')
     with open(fn_result, 'w') as fh_result:
-        for line in sys.stdin:
+        for line in f_in:
             print(line, end='', file=fh_result)
 
     # everything went well; make _SUCCESS
@@ -28,24 +22,20 @@ def text_output(out_dir):
     f = open(fn_success, 'w')
     f.close()
 
-# check if output dir is given
-output_dir = sys.argv[1]
-if output_dir == None:
-    sys.exit(ERR_NO_DIR_GIVEN)
 
-# check if output dir doesn't exist yet
-if os.path.exists(output_dir):
-    sys.exit(ERR_DIR_ALREADY_EXISTS)
+def output_formatter(f_in, output_dir):
+    """
+    Reads key-value pares from a file object and stores them to a directory
+    in the Hadoop-like format.
+    Parameters:
+        f_in:       the input file. the result of reduce
+        output_dir: the directory where the result files are stored
+    """
+    # check if output dir doesn't exist yet
+    if os.path.exists(output_dir):
+        raise HSEOutputPathError("Output path '{}' already exists".format(output_path))
 
-# make output dir
-os.mkdir(output_dir)
+    # make output dir
+    os.mkdir(output_dir)
 
-# output the text to files
-try:
-    text_output(output_dir)
-except:
-    ret_val = ERR_FAILED_TO_WRITE
-else:
-    ret_val = ERR_NO_ERR
-
-sys.exit(ret_val)
+    text_output(f_in, output_dir)

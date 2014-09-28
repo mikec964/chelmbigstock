@@ -13,6 +13,9 @@ import os
 import sys
 import subprocess as sp
 import tempfile as tf
+from hseexceptions import *
+from TextInputFormat import input_formatter
+from TextOutputFormat import output_formatter
 
 
 def is_special_reducer(fn_reducer):
@@ -115,55 +118,6 @@ def analyze_argv(argv):
 #
 # Hadoop Stream API Emulator
 #
-# first, exception definitions
-
-class HSEException(Exception):
-    """
-    Base exception class for HadoopStreamEnulator class
-    """
-    pass
-
-
-class HSEInputFormatterError(HSEException):
-    """
-    Raised when input formatter reported an error
-    """
-    def __init__(self, msg):
-        self.msg = msg
-
-
-class HSEOutputFormatterError(HSEException):
-    """
-    Raised when output formatter reported an error
-    """
-    def __init__(self, msg):
-        self.msg = msg
-
-
-class HSEMapperError(HSEException):
-    """
-    Raised when mapper reported an error
-    """
-    def __init__(self, msg):
-        self.msg = msg
-
-
-class HSEReducerError(HSEException):
-    """
-    Raised when reducer reported an error
-    """
-    def __init__(self, msg):
-        self.msg = msg
-
-
-class HSEOutputPathError(HSEException):
-    """
-    Raised when output path already exists
-    """
-    def __init__(self, msg):
-        self.msg = msg
-
-
 class HadoopStreamEmulator(object):
     """
     Mimics the behavior of the Hadoop stream API.
@@ -190,6 +144,25 @@ class HadoopStreamEmulator(object):
         self._user_python = user_python
         self._kv_separator = '\t'
 
+    def get_file_list(self):
+        """
+        Return:
+            If path is a file, returns a list with the path.
+            If path is a directory, returns a list of files in the directory.
+            if path is an invalid path, returns None
+        """
+        if not os.path.exists(self._input_path):
+            raise HSEInputPathError("Invalid input path '{}'".format(self._input_path))
+        elif os.path.isfile(self._input_path):
+            return [self._input_path]
+        else:
+            lists = []
+            for a_file in os.listdir(self._input_path):
+                a_path = os.path.join(self._input_path, a_file)
+                if os.path.isfile(a_path):
+                    lists.append(a_path)
+            return lists
+
     def shuffle(self, fh):
         """
         Shuffles the result of mapper.
@@ -207,69 +180,66 @@ class HadoopStreamEmulator(object):
         kv_list.sort(key = lambda l: l[0])
         return kv_list
 
-    def call_mapper(self, f_out):
+    def call_mapper(self, f_format, f_out):
         """
         Calls mapper and stores the result in a temp file for shuffling
+        Parameter:
+            f_format: file object for input formatter output
+            f_out:    file object for mapper output
         """
         print('**** mapping ****')
-        command = [ self._my_python, os.path.join(self._my_path, 'TextInputFormat.py'), self._input_path ]
-        p_input = sp.Popen(command, stdout = sp.PIPE)
+        input_formatter(self.get_file_list(), f_format)
+        f_format.seek(0)
 
         command = [ self._user_python, self._mapper ]
-        p_mapper = sp.Popen(command, stdin = p_input.stdout, stdout = f_out)
-        p_input.stdout.close()   # Allow input process to receive a SIGPIPE,
-                                 # if mapper process exits.
+        p_mapper = sp.Popen(command, stdin = f_format, stdout = f_out)
         p_mapper.wait()
-        p_input.wait()
-        if p_input.returncode != 0:
-            raise HSEInputFormatterError('Failed to read {}, return code={}: quit'.format(self._input_path, p_input.returncode))
         if p_mapper.returncode != 0:
             raise HSEMapperError('Mapper {} returned error: quit'.format(self._mapper))
 
-    def call_reducer(self, f_in, kv_list):
+    def call_reducer(self, kv_list, f_shfl, f_red):
         """
         Calls reducer and stores the result in the 'output' dir
+        Parameters:
+            kv_list: the reuslt of shuffling. a list of key-value pairs
+            f_shfl:  file object to store the kv_list
+            f_red:   file object to store the immediate result from reducer
         """
         print('**** reducing ****')
         for kv in kv_list:
             if len(kv) == 1:
-                print(kv[0], file=f_in)
+                print(kv[0], file=f_shfl)
             else:
-                print('{}\t{}'.format(kv[0], kv[1]), file=f_in)
-        f_in.seek(0)
+                print('{}\t{}'.format(kv[0], kv[1]), file=f_shfl)
+        f_shfl.seek(0)
 
         if self._reducer == 'aggregate':
             command = [ self._my_python, os.path.join(self._my_path, 'aggregate.py') ]
         else:
             command = [ self._user_python, self._reducer ]
-        p_reducer = sp.Popen(command, stdin = f_in, stdout = sp.PIPE)
-
-        command = [ self._my_python, os.path.join(self._my_path, 'TextOutputFormat.py'), self._output_path ]
-        p_output = sp.Popen(command, stdin = p_reducer.stdout)
-        p_reducer.stdout.close()
-
-        p_output.wait()
+        p_reducer = sp.Popen(command, stdin = f_shfl, stdout = f_red)
         p_reducer.wait()
+
+        f_red.seek(0)
+        output_formatter(f_red, self._output_path)
 
         if p_reducer.returncode != 0:
             raise HSEReducerError('Reducer {} returned error: quit'.format(self._reducer))
-        if p_output.returncode != 0:
-            raise HSEOutputFormatterError('Failed to write {}, return code={}: quit'.format(self._output_path, p_output.returncode))
 
     def execute(self):
         """
         execute MapReduce job
         """
         # mapper
-        with tf.TemporaryFile(mode='w+') as f_m:
-            self.call_mapper(f_m)
+        with tf.TemporaryFile(mode='w+') as f_format, tf.TemporaryFile(mode='w+') as f_m:
+            self.call_mapper(f_format, f_m)
             # shuffling
             f_m.seek(0)
             kv_list = self.shuffle(f_m)
 
         # reducer
-        with tf.TemporaryFile(mode='w+') as f_r:
-            self.call_reducer(f_r, kv_list)
+        with tf.TemporaryFile(mode='w+') as f_s, tf.TemporaryFile(mode='w+') as f_r:
+            self.call_reducer(kv_list, f_s, f_r)
 
         print('**** mapreduce job completed ****')
 
