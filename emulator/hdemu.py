@@ -56,7 +56,7 @@ def analyze_argv(argv):
             arg_reducer = '-reducer'
             arg_input = '-input'
             arg_output = '-output'
-            arg_interimdir = '-interimdir'
+            arg_interimdir = '-interim'
             arg_stss = [ (arg_mapper, sts_mapper),
                          (arg_reducer, sts_reducer),
                          (arg_input, sts_input),
