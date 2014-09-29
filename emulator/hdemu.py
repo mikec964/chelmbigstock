@@ -51,14 +51,17 @@ def analyze_argv(argv):
             sts_reducer = 2
             sts_input = 3
             sts_output = 4
+            sts_interimdir = 5
             arg_mapper = '-mapper'
             arg_reducer = '-reducer'
             arg_input = '-input'
             arg_output = '-output'
+            arg_interimdir = '-interimdir'
             arg_stss = [ (arg_mapper, sts_mapper),
                          (arg_reducer, sts_reducer),
                          (arg_input, sts_input),
-                         (arg_output, sts_output)
+                         (arg_output, sts_output),
+                         (arg_interimdir, sts_interimdir)
                        ]
             def sts_from_arg(arg):
                 for i_arg, i_sts in arg_stss:
@@ -66,6 +69,10 @@ def analyze_argv(argv):
                         return i_sts
                 return sts_init
             
+            # default values
+            self._interim_dir = None
+
+            # parse options
             state = sts_init
             for arg in iter_argv:
                 if state == sts_mapper:
@@ -79,6 +86,9 @@ def analyze_argv(argv):
                     state = sts_init
                 elif state == sts_output:
                     self._output_path = os.path.abspath(arg)
+                    state = sts_init
+                elif state == sts_interimdir:
+                    self._interim_dir = os.path.abspath(arg)
                     state = sts_init
                 else:
                     state = sts_from_arg(arg)
@@ -111,6 +121,10 @@ def analyze_argv(argv):
         @property
         def output_path(self):
             return self._output_path
+
+        @property
+        def interim_dir(self):
+            return self._interim_dir
     
     return CommandLineArguments(argv)
 
@@ -122,7 +136,18 @@ class HadoopStreamEmulator(object):
     """
     Mimics the behavior of the Hadoop stream API.
     """
-    def __init__(self, emu_path, mapper, reducer, input_path, output_path, user_python = 'python'):
+
+    # class constants
+    _fn_map_input = 'mapper_input.txt'
+    _fn_map_output = 'mapper_output.txt'
+    _fn_reduce_input = 'reducer_input.txt'
+    _fn_reduce_output = 'reducer_output.txt'
+
+    def __init__(self, emu_path,
+            mapper, reducer,
+            input_path, output_path,
+            interim_dir = None,
+            user_python = 'python'):
         """
         Parameters:
             emu_path: the home directory of the emulator
@@ -135,12 +160,16 @@ class HadoopStreamEmulator(object):
         if os.path.exists(output_path):
             raise HSEOutputPathError("Output path '{}' already exists".format(output_path))
 
+        if interim_dir != None and os.path.exists(interim_dir):
+            raise HSEInterimDirError("Interim directory '{}' already exists".format(interim_dir))
+
         self._my_python = 'python'
         self._my_path = emu_path
         self._mapper = mapper
         self._reducer = reducer
         self._input_path = input_path
         self._output_path = output_path
+        self._interim_dir = interim_dir
         self._user_python = user_python
         self._kv_separator = '\t'
 
@@ -182,7 +211,7 @@ class HadoopStreamEmulator(object):
 
     def call_mapper(self, f_format, f_out):
         """
-        Calls mapper and stores the result in a temp file for shuffling
+        Calls mapper and stores the result in a file for shuffling
         Parameter:
             f_format: file object for input formatter output
             f_out:    file object for mapper output
@@ -226,9 +255,9 @@ class HadoopStreamEmulator(object):
         if p_reducer.returncode != 0:
             raise HSEReducerError('Reducer {} returned error: quit'.format(self._reducer))
 
-    def execute(self):
+    def _execute_temp(self):
         """
-        execute MapReduce job
+        execute MapReduce job with temporary files
         """
         # mapper
         with tf.TemporaryFile(mode='w+') as f_format, tf.TemporaryFile(mode='w+') as f_m:
@@ -240,6 +269,36 @@ class HadoopStreamEmulator(object):
         # reducer
         with tf.TemporaryFile(mode='w+') as f_s, tf.TemporaryFile(mode='w+') as f_r:
             self.call_reducer(kv_list, f_s, f_r)
+
+    def _execute_interim(self):
+        """
+        execute MapReduce job; interim results are saved in interim_dir
+        """
+        fn_map_input = os.path.join(self._interim_dir, HadoopStreamEmulator._fn_map_input)
+        fn_map_output = os.path.join(self._interim_dir, HadoopStreamEmulator._fn_map_output)
+        fn_reduce_input = os.path.join(self._interim_dir, HadoopStreamEmulator._fn_reduce_input)
+        fn_reduce_output = os.path.join(self._interim_dir, HadoopStreamEmulator._fn_reduce_output)
+        os.mkdir(self._interim_dir)
+
+        # mapper
+        with open(fn_map_input, mode='w+') as f_mi, open(fn_map_output, mode='w+') as f_mo:
+            self.call_mapper(f_mi, f_mo)
+            # shuffling
+            f_mo.seek(0)
+            kv_list = self.shuffle(f_mo)
+
+        # reducer
+        with open(fn_reduce_input, mode='w+') as f_ri, open(fn_reduce_output, mode='w+') as f_ro:
+            self.call_reducer(kv_list, f_ri, f_ro)
+
+    def execute(self):
+        """
+        execute MapReduce job
+        """
+        if self._interim_dir == None:
+            self._execute_temp()
+        else:
+            self._execute_interim()
 
         print('**** mapreduce job completed ****')
 
@@ -284,6 +343,7 @@ print('Mapper     : {}'.format(emuopt.mapper))
 print('Reducer    : {}'.format(emuopt.reducer))
 print('Input path : {}'.format(emuopt.input_path))
 print('Output path: {}'.format(emuopt.output_path))
+print('interim dir: {}'.format(emuopt.interim_dir))
 
 try:
     check_mr(emuopt.mapper, emuopt.reducer)
@@ -291,6 +351,7 @@ try:
         emuopt.emulator_path,
         emuopt.mapper, emuopt.reducer,
         emuopt.input_path, emuopt.output_path,
+        emuopt._interim_dir,
         emuopt.python_path
         )
     emulator.execute()

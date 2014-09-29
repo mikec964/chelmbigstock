@@ -58,3 +58,11 @@ class HSEOutputPathError(HSEException):
     """
     def __init__(self, msg):
         self.msg = msg
+
+
+class HSEInterimDirError(HSEException):
+    """
+    Raised when interim directory already exists
+    """
+    def __init__(self, msg):
+        self.msg = msg
