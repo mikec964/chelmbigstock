@@ -11,14 +11,16 @@ from __future__ import print_function
 
 import os
 import sys
-import subprocess as sp
 import tempfile as tf
-from hseexceptions import *
+import hseexceptions as excp
 from TextInputFormat import input_formatter
 from TextOutputFormat import output_formatter
 
 
-def is_special_reducer(fn_reducer):
+def is_builtin_reducer(fn_reducer):
+    """
+    Returns True if fn_reducer specifies the built-in reducer.
+    """
     return (fn_reducer == 'aggregate')
 
 
@@ -76,7 +78,7 @@ def analyze_argv(argv):
                     self._mapper = os.path.abspath(arg)
                     state = sts_init
                 elif state == sts_reducer:
-                    self._reducer = arg if is_special_reducer(arg) else os.path.abspath(arg)
+                    self._reducer = arg if is_builtin_reducer(arg) else os.path.abspath(arg)
                     state = sts_init
                 elif state == sts_input:
                     self._input_path = os.path.abspath(arg)
@@ -153,22 +155,31 @@ class StdioResetter(object):
 # execute user script
 #
 def execute_user_scirpt(type_name, file_name, f_in, f_out):
-        # compile user script
-        try:
-            with open(file_name, 'r') as fh:
-                user_src = fh.read()
-            user_exe = compile(user_src, file_name, 'exec', dont_inherit=True)
-        except IOError:
-            raise HSEMapperError('{} {} failed to pen: quit'.format(type_name, file_name))
-        except SyntaxError as es:
-            raise HSEMapperError('{} {} at {} syntax error: quit'.format(type_name, es.filename, es.lineno))
-        except TypeError:
-            raise HSEMapperError('{} {} type error: quit'.format(type_name, file_name))
+    """
+    Runs a python script with given stdio.
+    Parameters:
+        type_name: String used for a exception message. Typically 'Mapper' or
+                   'Reducer'
+        file_name: The file name of the Python script to run
+        f_in:    : File object for data input. Used as stdin during execution.
+        f_out:   : File object for data output. Used as stdout.
+    """
+    # compile user script
+    try:
+        with open(file_name, 'r') as fh:
+            user_src = fh.read()
+        user_exe = compile(user_src, file_name, 'exec', dont_inherit=True)
+    except IOError:
+        raise excp.HSEMapperError('{} {} failed to pen: quit'.format(type_name, file_name))
+    except SyntaxError as es:
+        raise excp.HSEMapperError('{} {} at {} syntax error: quit'.format(type_name, es.filename, es.lineno))
+    except TypeError:
+        raise excp.HSEMapperError('{} {} type error: quit'.format(type_name, file_name))
 
-        # execute user script
-        org_stdio = StdioResetter(f_in, f_out)
-        exec(user_exe, globals())
-        org_stdio.restore()
+    # execute user script
+    org_stdio = StdioResetter(f_in, f_out)
+    exec(user_exe, globals())
+    org_stdio.restore()
 
 
 #
@@ -198,10 +209,10 @@ class HadoopStreamEmulator(object):
             output_path: the directory to store result
         """
         if os.path.exists(output_path):
-            raise HSEOutputPathError("Output path '{}' already exists".format(output_path))
+            raise excp.HSEOutputPathError("Output path '{}' already exists".format(output_path))
 
         if interim_dir != None and os.path.exists(interim_dir):
-            raise HSEInterimDirError("Interim directory '{}' already exists".format(interim_dir))
+            raise excp.HSEInterimDirError("Interim directory '{}' already exists".format(interim_dir))
 
         self._my_python = 'python'
         self._my_path = emu_path
@@ -220,7 +231,7 @@ class HadoopStreamEmulator(object):
             if path is an invalid path, returns None
         """
         if not os.path.exists(self._input_path):
-            raise HSEInputPathError("Invalid input path '{}'".format(self._input_path))
+            raise excp.HSEInputPathError("Invalid input path '{}'".format(self._input_path))
         elif os.path.isfile(self._input_path):
             return [self._input_path]
         else:
@@ -354,12 +365,12 @@ def check_mr(fn_mapper, fn_reducer):
     try:
         is_script_ok(fn_mapper)
     except IOError:
-        raise HSEMapperError("Mapper {} doesn't exist: quit".format(fn_mapper))
+        raise excp.HSEMapperError("Mapper {} doesn't exist: quit".format(fn_mapper))
     try:
-        if not is_special_reducer(fn_reducer):
+        if not is_builtin_reducer(fn_reducer):
             is_script_ok(fn_reducer)
     except IOError:
-        raise HSEReducerError("Reducer {} doesn't exist: quit".format(fn_reducer))
+        raise excp.HSEReducerError("Reducer {} doesn't exist: quit".format(fn_reducer))
 
 
 # Hadoop Streaming API emulator for python script
@@ -383,5 +394,5 @@ try:
         emuopt._interim_dir
         )
     emulator.execute()
-except HSEException as e:
+except excp.HSEException as e:
     print('!!!! ERROR !!!! {}'.format(e.msg), file=sys.stderr)
