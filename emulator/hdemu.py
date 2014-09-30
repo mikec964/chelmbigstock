@@ -38,9 +38,6 @@ def analyze_argv(argv):
         Ignores unknown arguments.
         """
         def __init__(self, argv):
-            # default values
-            self._python_path = 'python'
-            
             # the file path to this emulator
             iter_argv = iter(argv)
             self._set_emulator_path(next(iter_argv))
@@ -99,10 +96,6 @@ def analyze_argv(argv):
             self._emulator_path = os.path.dirname(os.path.abspath(arg))
         
         @property
-        def python_path(self):
-            return self._python_path
-        
-        @property
         def emulator_path(self):
             return self._emulator_path
         
@@ -130,6 +123,55 @@ def analyze_argv(argv):
 
 
 #
+# stdio resetter
+#
+class StdioResetter(object):
+    """
+    Utility to set / reset stdin and stdout
+    """
+    def __init__(self, new_stdin = None, new_stdout = None):
+        """
+        Parameters:
+            new_stdin:  File object to set to system stdin. If None, keeps
+                        the current stdin
+            new_stdout: File object to set to system stdout. If None, keeps
+                        the current stdout
+        """
+        self._org_stdin = sys.stdin
+        self._org_stdout = sys.stdout
+        if new_stdin != None:
+            sys.stdin = new_stdin
+        if new_stdout != None:
+            sys.stdout = new_stdout
+
+    def restore(self):
+        sys.stdin = self._org_stdin
+        sys.stdout = self._org_stdout
+
+
+#
+# execute user script
+#
+def execute_user_scirpt(type_name, file_name, f_in, f_out):
+        # compile user script
+        try:
+            with open(file_name, 'r') as fh:
+                user_src = fh.read()
+            user_exe = compile(user_src, file_name, 'exec', dont_inherit=True)
+        except IOError:
+            raise HSEMapperError('{} {} failed to pen: quit'.format(type_name, file_name))
+        except SyntaxError as es:
+            raise HSEMapperError('{} {} at {} syntax error: quit'.format(type_name, es.filename, es.lineno))
+        except TypeError:
+            raise HSEMapperError('{} {} type error: quit'.format(type_name, file_name))
+
+        # execute user script
+        org_stdio = StdioResetter(f_in, f_out)
+        exec(user_exe, globals())
+        org_stdio.restore()
+
+
+#
 # Hadoop Stream API Emulator
 #
 class HadoopStreamEmulator(object):
@@ -146,8 +188,7 @@ class HadoopStreamEmulator(object):
     def __init__(self, emu_path,
             mapper, reducer,
             input_path, output_path,
-            interim_dir = None,
-            user_python = 'python'):
+            interim_dir = None):
         """
         Parameters:
             emu_path: the home directory of the emulator
@@ -155,7 +196,6 @@ class HadoopStreamEmulator(object):
             reducer:  the path to a reducer script in Python
             input_path:  the file name or directory of input data
             output_path: the directory to store result
-            user_python: the path to the python interpreter for mapper/reducer
         """
         if os.path.exists(output_path):
             raise HSEOutputPathError("Output path '{}' already exists".format(output_path))
@@ -170,7 +210,6 @@ class HadoopStreamEmulator(object):
         self._input_path = input_path
         self._output_path = output_path
         self._interim_dir = interim_dir
-        self._user_python = user_python
         self._kv_separator = '\t'
 
     def get_file_list(self):
@@ -220,11 +259,7 @@ class HadoopStreamEmulator(object):
         input_formatter(self.get_file_list(), f_format)
         f_format.seek(0)
 
-        command = [ self._user_python, self._mapper ]
-        p_mapper = sp.Popen(command, stdin = f_format, stdout = f_out)
-        p_mapper.wait()
-        if p_mapper.returncode != 0:
-            raise HSEMapperError('Mapper {} returned error: quit'.format(self._mapper))
+        execute_user_scirpt('Mapper', self._mapper, f_format, f_out)
 
     def call_reducer(self, kv_list, f_shfl, f_red):
         """
@@ -242,18 +277,13 @@ class HadoopStreamEmulator(object):
                 print('{}\t{}'.format(kv[0], kv[1]), file=f_shfl)
         f_shfl.seek(0)
 
-        if self._reducer == 'aggregate':
-            command = [ self._my_python, os.path.join(self._my_path, 'aggregate.py') ]
-        else:
-            command = [ self._user_python, self._reducer ]
-        p_reducer = sp.Popen(command, stdin = f_shfl, stdout = f_red)
-        p_reducer.wait()
+        # use built-in aggregator if user wants
+        reducer = os.path.join(self._my_path, 'aggregate.py') if self._reducer == 'aggregate' else self._reducer
+
+        execute_user_scirpt('Reducer', reducer, f_shfl, f_red)
 
         f_red.seek(0)
         output_formatter(f_red, self._output_path)
-
-        if p_reducer.returncode != 0:
-            raise HSEReducerError('Reducer {} returned error: quit'.format(self._reducer))
 
     def _execute_temp(self):
         """
@@ -338,7 +368,6 @@ def check_mr(fn_mapper, fn_reducer):
 # analyze command line arguments
 emuopt = analyze_argv(sys.argv)
 print('System     : {}'.format(sys.version))
-print('python cmd : {}'.format(emuopt.python_path))
 print('Mapper     : {}'.format(emuopt.mapper))
 print('Reducer    : {}'.format(emuopt.reducer))
 print('Input path : {}'.format(emuopt.input_path))
@@ -351,8 +380,7 @@ try:
         emuopt.emulator_path,
         emuopt.mapper, emuopt.reducer,
         emuopt.input_path, emuopt.output_path,
-        emuopt._interim_dir,
-        emuopt.python_path
+        emuopt._interim_dir
         )
     emulator.execute()
 except HSEException as e:
