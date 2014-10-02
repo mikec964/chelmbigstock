@@ -46,13 +46,25 @@ class AGGRNull(object):
         pass
 
 
-class AGGRLongValueSum(object):
+class AGGREmittable(object):
     """
-    Aggregator to sum up Long values
+    Base calss for all emittable aggregator
     """
 
     def __init__(self):
-        self._sum = None
+        self._value = None
+
+    # def append(self, value) must be defined in derived classes
+
+    def emit(self, emitter):
+        if self._value != None:
+            emitter(self._value)
+
+
+class AGGRLongValueSum(AGGREmittable):
+    """
+    Aggregator to sum up Long values
+    """
 
     def append(self, value):
         """
@@ -65,11 +77,47 @@ class AGGRLongValueSum(object):
         except ValueError:
             pass    # just ignore
         else:
-            self._sum = value if self._sum == None else self._sum + value
+            self._value = value if self._value == None else self._value + value
 
-    def emit(self, emitter):
-        if self._sum != None:
-            emitter(self._sum)
+
+class AGGRLongValueMax(AGGREmittable):
+    """
+    Aggregator to pick up maxinum value
+    """
+
+    def append(self, value):
+        """
+        Parameter:
+            value: string to represent integer value. If 'Value' cannot
+                   converted to integer value, does nothing
+        """
+        try:
+            value = int(value)
+        except ValueError:
+            pass    # just ignore
+        else:
+            if self._value == None or self._value < value:
+                self._value = value
+
+
+class AGGRLongValueMin(AGGREmittable):
+    """
+    Aggregator to pick up minimum value
+    """
+
+    def append(self, value):
+        """
+        Parameter:
+            value: string to represent integer value. If 'Value' cannot
+                   converted to integer value, does nothing
+        """
+        try:
+            value = int(value)
+        except ValueError:
+            pass    # just ignore
+        else:
+            if self._value == None or self._value > value:
+                self._value = value
 
 
 #
@@ -83,7 +131,9 @@ def aggregator_factory(aggr_name):
 # do not include AGGRNull in the aggregator dictionary as it is meant for
 # the initial value
 aggregator_factory.aggregators = {
-    'LongValueSum':AGGRLongValueSum
+    'LongValueSum':AGGRLongValueSum,
+    'LongValueMax':AGGRLongValueMax,
+    'LongValueMin':AGGRLongValueMin
     }
 
 
@@ -114,11 +164,4 @@ def main():
 
 
 if __name__ == '__main__':
-    try:
-        main()
-    except AGGRException:
-        ret_code = 1
-    else:
-        ret_code = 0
-
-    sys.exit(ret_code)
+    main()
