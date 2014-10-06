@@ -252,9 +252,6 @@ class HadoopStreamEmulator(object):
         kv_list = []
         for line in fh:
             a_pair = line.strip().split(self._kv_separator, 1)
-            # if a pair doesn't have value, just remove it
-            if len(a_pair) != 2:
-                continue
             kv_list.append(a_pair)
         kv_list.sort(key = lambda l: l[0])
         return kv_list
@@ -283,7 +280,7 @@ class HadoopStreamEmulator(object):
         print('**** reducing ****')
         for kv in kv_list:
             if len(kv) == 1:
-                print(kv[0], file=f_shfl)
+                print('{}\t'.format(kv[0]), file=f_shfl)
             else:
                 print('{}\t{}'.format(kv[0], kv[1]), file=f_shfl)
         f_shfl.seek(0)
@@ -294,7 +291,7 @@ class HadoopStreamEmulator(object):
         execute_user_scirpt('Reducer', reducer, f_shfl, f_red)
 
         f_red.seek(0)
-        output_formatter(f_red, self._output_path)
+        output_formatter(self._kv_separator, f_red, self._output_path)
 
     def _execute_temp(self):
         """

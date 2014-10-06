@@ -10,12 +10,16 @@ from __future__ import print_function
 import os
 from hseexceptions import HSEOutputPathError
 
-def text_output(f_in, out_dir):
+def text_output(kv_separator, f_in, out_dir):
     # copy stdin to result file
     fn_result = os.path.join(out_dir, 'part-00000')
     with open(fn_result, 'w') as fh_result:
         for line in f_in:
-            print(line, end='', file=fh_result)
+            a_pair = line.strip().split(kv_separator, 1)
+            if len(a_pair) == 1:
+                print('{}\t'.format(a_pair[0]), file=fh_result)
+            else:
+                print('{}\t{}'.format(a_pair[0], a_pair[1]), file=fh_result)
 
     # everything went well; make _SUCCESS
     fn_success = os.path.join(out_dir, '_SUCCESS')
@@ -23,7 +27,7 @@ def text_output(f_in, out_dir):
     f.close()
 
 
-def output_formatter(f_in, output_dir):
+def output_formatter(kv_separator, f_in, output_dir):
     """
     Reads key-value pares from a file object and stores them to a directory
     in the Hadoop-like format.
@@ -38,4 +42,4 @@ def output_formatter(f_in, output_dir):
     # make output dir
     os.mkdir(output_dir)
 
-    text_output(f_in, output_dir)
+    text_output(kv_separator, f_in, output_dir)
