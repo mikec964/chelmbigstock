@@ -94,7 +94,7 @@ def download_all():
     """
     f = open('stock_symbols.txt', 'r')
     fout = open('../data/stocks_read.txt', 'w')
-    count_max = 30
+    count_max = 500
     count = 0
     for stock_symbol in f:
         stock_symbol = stock_symbol.strip()
