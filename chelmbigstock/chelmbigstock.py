@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+"""
+Code to use stock history to see if future fluctuations can be predicted
+
+@Author: Andy Webber
+Created: March 1, 2014
+"""
 # A python script to learn about stock picking
 import sys
 
@@ -13,39 +19,48 @@ import dateutil
 from Stock import Stock
 from LearningData import LearningData
 
-def construct(max_stocks, future_day):
+def form_data(init_param):
     """ This function constructs the training, testing and cross validation
         objects for the stock market analysis """
-    stocks = Stock.read_stocks('../data/stocks_read.txt', max_stocks)
+    stocks = Stock.read_stocks('../data/stocks_read.txt', init_param.max_stocks)
     stocks_train = []
     stocks_cv = []
     stocks_test = []
     count = 0
     for stock in stocks:
-        if count % 2 == 0:
+        if count % init_param.cv_factor == 0:
             stocks_train.append(stock)
         else:
             stocks_cv.append(stock)
         count = count + 1
     
-    training_data = LearningData()
-    cv_data = LearningData()
-    test_data = LearningData()
-    
     day_history = []
-    for i in range(5, 21, 5):
+    for i in range(init_param.train_increment, init_param.train_days, init_param.train_increment):
         day_history.append(i)
         
-    reference_date = dateutil.days_since_1900('1980-01-01')
-    training_data.construct(stocks_train,[reference_date, day_history, future_day])
-    cv_data.construct(stocks_cv,[reference_date, day_history, future_day])
+    for date in init_param.reference_dates:
+        try:
+            training_data
+        except NameError:
+            training_data = LearningData()
+            training_data.construct(stocks_train,[date, day_history, init_param.future_day])
+            cv_data = LearningData()
+            cv_data.construct(stocks_cv,[date, day_history, init_param.future_day])
+        else:
+            training_data.append(stocks_train,[date, day_history, init_param.future_day])
+            cv_data.append(stocks_cv,[date, day_history, init_param.future_day])
+            
+    for date in init_param.test_dates:
+        try:
+            test_data
+        except NameError:
+            test_data = LearningData()
+            test_data.construct(stocks,[date, day_history, init_param.future_day])
+        else:
+            test_data.append(stocks,[date, day_history, init_param.future_day])
     
-    reference_date = dateutil.days_since_1900('1981-01-01')
-    training_data.append(stocks_train,[reference_date, day_history, future_day])
-    cv_data.append(stocks_cv,[reference_date, day_history, future_day])
-    
-    reference_date = dateutil.days_since_1900('1991-01-01')
-    test_data.append(stocks,[reference_date, day_history, future_day])
+    #reference_date = dateutil.days_since_1900('1991-01-01')
+    #test_data.construct(stocks,[reference_date, day_history, init_param.future_day])
     
     return training_data, cv_data, test_data
 
@@ -137,7 +152,6 @@ def set_reg_param(training_data, cv_data, alpha_min, alpha_max):
             """ We have a new minimum so value and alph must be recored """
             min_diff = diff_cv
             min_alpha = alph
-        print(" the smallest difference is ", min_diff, " at ", min_alpha)
         alpha_largest = alph # Keep track of largest alpha used
         alph = alph * 1.5 # increment alph
     f.close()
@@ -155,56 +169,71 @@ def set_reg_param(training_data, cv_data, alpha_min, alpha_max):
         
         
 
-def main(argv): 
+def execute(init_param): 
+    """ execute is the function where each run is done. main sets parameters then calls execute"""
     
-    max_stocks = 200
-    future_day = 25
-    print("the length of argv is ", len(argv))
-    for i in range(0,len(argv)):
-        print(" this argument is ", i, argv[i])
-        if argv[i] == '-max':
-            max_stocks = argv[i+1]
-        if argv[i] == '-future':
-            future_day = argv[i+1]
-        if argv[i] == '-start':
-            start_dates = argv[i+1]
-            print("start_dates = ", start_dates)
-            start_list = start_dates.split(',')
-            print("start_list = ", start_list)
-    print("max_stocks = ", max_stocks)
+    training_data, cv_data, test_data = form_data(init_param)
     
-    training_data, cv_data, test_data = construct(max_stocks, future_day)
+    if init_param.output:
+        output(training_data, cv_data)
     
-    output(training_data, cv_data)
-    
-    regularization_parameter = learn(training_data, cv_data)
+    clf, regularization_parameter = learn(training_data, cv_data)
     
     
+    """ do an Anderson Darling test on the data to determine if it is a normal fit"""
+    A2, sig, crit = anderson(test_data.y, dist = 'norm')
+    print("the value for A2 is ", A2)
+    
+    mn = np.mean(test_data.y)
+    sd = np.std(test_data.y)
+    print("The mean and standard deviation of the test data are ", mn, sd)
     
     
-    
-    # Construct an LearningData set
-  #  reference_date = dateutil.days_since_1900('1984-01-01')
-  #  i_day = dateutil.find_ref_date_idx(stocks[0], reference_date)
-  #  print (i_day, stocks[0].dates[i_day] )
-    """ f = open('value.txt', 'w')
-    
-    while i_day > 100:
-        investing_data.construct(stocks,[reference_date, [50, 100, 150], 50])  
-        # Predict growth of stock values based on history
-        predict_data = clf.predict(investing_data.X)
-        # Predict the stock that will have best growth
-        index_max, value = max(enumerate(predict_data), key=itemgetter(1))
-        # Upgrade portfolio value based on its actual performance
-        portfolio_value = portfolio_value * investing_data.y[index_max]
-        average_value = average_value * np.mean(investing_data.y)
-        f.write(str(reference_date) + " " + str(portfolio_value) + " " + str(average_value) + "\n")
-        #print(portfolio_value)
-        i_day = i_day - 50
-        reference_date = stocks[0].dates[i_day]
-    f.close() """
+    predict_data = clf.predict(test_data.X)
+    difference = predict_data - test_data.y
+    mn = np.mean(difference)
+    sd = np.std(difference)
+    print("The mean and standard deviation of the difference are ", mn, sd)
     
     print("run finished")
+    
+class InitialParameters(object):
+    """ This class defines an object of parameters used to run the code. It
+        is set in main and the parameters are passed to execute """
+    
+    def __init__(self):
+        """ The object is defined with default values that can then be changed in main()"""
+        
+        self.max_stocks = 100
+        """ cv_factor determines what portion of stocks to put in cross validation set and what portion
+            to leave in training set. cv_factor = 2 means every other stock goes into cross validation
+            set. cv_factor = 3 means every third stock goes into cross validation set """
+        self.cv_factor = 2 
+        """ future_day is how many training days in the future we train for. Setting future_day = 25
+            means we are measuring how the stock does 25 days out """
+        self.future_day = 25
+        """ The reference dates are the reference dates we are training on"""
+        self.reference_dates = []
+        self.reference_dates.append(dateutil.days_since_1900('1980-01-01'))
+        """ test_dates are the dates we are using for testing """
+        self.test_dates = []
+        self.test_dates.append(dateutil.days_since_1900('1991-01-01'))
+        """train_history_days and train_increment set how many historical days we use to
+           train and the increment used. Setting train_history_days = 21 and train_increment = 5
+           means we are using the values at days days 5, 10, 15 and 20 days before the reference day
+           as input features """
+        self.train_days = 21
+        self.train_increment = 5
+        """ output is just a boolean about calling the output function to write out 
+            appropriate X and y matricies. The default is False meaning do not write out
+            matricies """
+        self.output = False
+    
+def main(argv):
+    
+    init_param = InitialParameters()
+    init_param.reference_dates.append(dateutil.days_since_1900('1981-01-01'))
+    execute(init_param)
 
 
 if __name__ == "__main__":

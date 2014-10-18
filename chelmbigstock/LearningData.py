@@ -1,3 +1,10 @@
+"""
+LearningData object used in chelmbigstock
+
+@Author: Andy Webber
+Created: March 1, 2014
+"""
+
 import sys
 
 from Stock import Stock
@@ -54,7 +61,6 @@ class LearningData(object):
             It is meant to be called from construct
             for a new object or from outside the method to append to an existing
             """
-        
         if (self.n != len(dates[1]) + 1):
             sys.exit("trying to append to wrong size data set")
         

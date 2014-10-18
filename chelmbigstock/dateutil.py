@@ -1,4 +1,10 @@
+"""
+Utility function to convert date from form read in yahoo finance to the 
+number of days since 1900
 
+@Author: Andy Webber
+Created: March 1, 2014
+"""
 
 def days_since_1900(date):
     """Convert string date to days since 1/1/1900

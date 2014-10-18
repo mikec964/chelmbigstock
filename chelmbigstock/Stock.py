@@ -1,3 +1,10 @@
+"""
+Stock object used in chelmbigstock
+
+@Author: Andy Webber
+Created: March 1, 2014
+"""
+
 import os
 import csv
 
