@@ -30,7 +30,7 @@ def analyze_argv(argv):
     Arguments:
         List of command line arguments (list of string)
     Return:
-        Object with properies; the properties are associated with command line
+        Object with properties; the properties are associated with command line
         arguments.
     """
     
@@ -371,25 +371,24 @@ def check_mr(fn_mapper, fn_reducer):
 
 
 # Hadoop Streaming API emulator for python script
-# main
-
-# analyze command line arguments
-emuopt = analyze_argv(sys.argv)
-print('System     : {}'.format(sys.version))
-print('Mapper     : {}'.format(emuopt.mapper))
-print('Reducer    : {}'.format(emuopt.reducer))
-print('Input path : {}'.format(emuopt.input_path))
-print('Output path: {}'.format(emuopt.output_path))
-print('interim dir: {}'.format(emuopt.interim_dir))
-
-try:
-    check_mr(emuopt.mapper, emuopt.reducer)
-    emulator = HadoopStreamEmulator(
-        emuopt.emulator_path,
-        emuopt.mapper, emuopt.reducer,
-        emuopt.input_path, emuopt.output_path,
-        emuopt._interim_dir
-        )
-    emulator.execute()
-except excp.HSEException as e:
-    print('!!!! ERROR !!!! {}'.format(e.msg), file=sys.stderr)
+if __name__ == '__main__':
+    # analyze command line arguments
+    emuopt = analyze_argv(sys.argv)
+    print('System     : {}'.format(sys.version))
+    print('Mapper     : {}'.format(emuopt.mapper))
+    print('Reducer    : {}'.format(emuopt.reducer))
+    print('Input path : {}'.format(emuopt.input_path))
+    print('Output path: {}'.format(emuopt.output_path))
+    print('interim dir: {}'.format(emuopt.interim_dir))
+    
+    try:
+        check_mr(emuopt.mapper, emuopt.reducer)
+        emulator = HadoopStreamEmulator(
+            emuopt.emulator_path,
+            emuopt.mapper, emuopt.reducer,
+            emuopt.input_path, emuopt.output_path,
+            emuopt._interim_dir
+            )
+        emulator.execute()
+    except excp.HSEException as e:
+        print('!!!! ERROR !!!! {}'.format(e.msg), file=sys.stderr)
