@@ -45,28 +45,43 @@ def analyze_argv(argv):
             self._set_emulator_path(next(iter_argv))
             
             # state definitions
-            sts_init = 0
-            sts_mapper = 1
-            sts_reducer = 2
-            sts_input = 3
-            sts_output = 4
-            sts_interimdir = 5
-            arg_mapper = '-mapper'
-            arg_reducer = '-reducer'
-            arg_input = '-input'
-            arg_output = '-output'
-            arg_interimdir = '-interim'
-            arg_stss = [ (arg_mapper, sts_mapper),
-                         (arg_reducer, sts_reducer),
-                         (arg_input, sts_input),
-                         (arg_output, sts_output),
-                         (arg_interimdir, sts_interimdir)
-                       ]
-            def sts_from_arg(arg):
-                for i_arg, i_sts in arg_stss:
-                    if i_arg == arg:
-                        return i_sts
+            def sts_init(arg):
+                state = opt_stss[arg] if arg in opt_stss else sts_init
+                if state == sts_init:
+                    print("Unknown argument '{}': ignored".format(arg), file=sys.stderr)
+                return state
+                
+            def sts_mapper(arg):
+                self._mapper = os.path.abspath(arg)
                 return sts_init
+            sts_mapper.opt = '-mapper' 
+            
+            def sts_reducer(arg):
+                self._reducer = arg if is_builtin_reducer(arg) else os.path.abspath(arg)
+                return sts_init
+            sts_reducer.opt = '-reducer'
+            
+            def sts_input(arg):
+                self._input_path = os.path.abspath(arg)
+                return sts_init
+            sts_input.opt = '-input'
+            
+            def sts_output(arg):
+                self._output_path = os.path.abspath(arg)
+                return sts_init
+            sts_output.opt = '-output'
+            
+            def sts_interimdir(arg):
+                self._interim_dir = os.path.abspath(arg)
+                return sts_init
+            sts_interimdir.opt = '-interim'
+                
+            opt_stss = { sts_mapper.opt : sts_mapper,
+                         sts_reducer.opt : sts_reducer,
+                         sts_input.opt : sts_input,
+                         sts_output.opt : sts_output,
+                         sts_interimdir.opt : sts_interimdir
+                       }
             
             # default values
             self._interim_dir = None
@@ -74,26 +89,8 @@ def analyze_argv(argv):
             # parse options
             state = sts_init
             for arg in iter_argv:
-                if state == sts_mapper:
-                    self._mapper = os.path.abspath(arg)
-                    state = sts_init
-                elif state == sts_reducer:
-                    self._reducer = arg if is_builtin_reducer(arg) else os.path.abspath(arg)
-                    state = sts_init
-                elif state == sts_input:
-                    self._input_path = os.path.abspath(arg)
-                    state = sts_init
-                elif state == sts_output:
-                    self._output_path = os.path.abspath(arg)
-                    state = sts_init
-                elif state == sts_interimdir:
-                    self._interim_dir = os.path.abspath(arg)
-                    state = sts_init
-                else:
-                    state = sts_from_arg(arg)
-                    if state == sts_init:
-                        print("Unknown argument '{}': ignored".format(arg), file=sys.stderr)
-        
+                state = state(arg)
+
         def _set_emulator_path(self, arg):
             self._emulator_path = os.path.dirname(os.path.abspath(arg))
         
