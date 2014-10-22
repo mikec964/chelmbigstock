@@ -75,16 +75,25 @@ def analyze_argv(argv):
                 self._interim_dir = os.path.abspath(arg)
                 return sts_init
             sts_interimdir.opt = '-interim'
-                
+            # default values
+            self._interim_dir = None
+            
+            def sts_cmdenv(arg):
+                var_val = arg.split('=', 1)
+                if len(var_val) == 2:
+                    self._cmdenv_dict[var_val[0]] = var_val[1]
+                return sts_init
+            sts_cmdenv.opt = '-cmdenv'
+            self._cmdenv_dict = {}
+            self._cmdenv = None     # default value
+
             opt_stss = { sts_mapper.opt : sts_mapper,
                          sts_reducer.opt : sts_reducer,
                          sts_input.opt : sts_input,
                          sts_output.opt : sts_output,
-                         sts_interimdir.opt : sts_interimdir
+                         sts_interimdir.opt : sts_interimdir,
+                         sts_cmdenv.opt : sts_cmdenv
                        }
-            
-            # default values
-            self._interim_dir = None
 
             # parse options
             state = sts_init
@@ -117,6 +126,12 @@ def analyze_argv(argv):
         @property
         def interim_dir(self):
             return self._interim_dir
+
+        @property
+        def cmdenv(self):
+            if self._cmdenv is None:
+                self._cmdenv = [ (var, self._cmdenv_dict[var]) for var in iter(self._cmdenv_dict) ]
+            return self._cmdenv
     
     return CommandLineArguments(argv)
 
@@ -196,7 +211,8 @@ class HadoopStreamEmulator(object):
     def __init__(self, emu_path,
             mapper, reducer,
             input_path, output_path,
-            interim_dir = None):
+            interim_dir = None,
+            cmdenv = None):
         """
         Parameters:
             emu_path: the home directory of the emulator
@@ -204,12 +220,19 @@ class HadoopStreamEmulator(object):
             reducer:  the path to a reducer script in Python
             input_path:  the file name or directory of input data
             output_path: the directory to store result
+            interim_dir: the directory to store interim results
+                         mapper input/ouput, reducer input/output
+            cmdenv:    : the list of environment variable to pass mapper/reducer
         """
         if os.path.exists(output_path):
-            raise excp.HSEOutputPathError("Output path '{}' already exists".format(output_path))
+            raise excp.HSECommandLineError("Output path '{}' already exists".format(output_path))
 
-        if interim_dir != None and os.path.exists(interim_dir):
-            raise excp.HSEInterimDirError("Interim directory '{}' already exists".format(interim_dir))
+        if interim_dir is not None and os.path.exists(interim_dir):
+            raise excp.HSECommandLineError("Interim directory '{}' already exists".format(interim_dir))
+
+        if cmdenv is not None:
+            for var, val in cmdenv:
+                os.environ[var] = val
 
         self._my_python = 'python'
         self._my_path = emu_path
@@ -228,7 +251,7 @@ class HadoopStreamEmulator(object):
             if path is an invalid path, returns None
         """
         if not os.path.exists(self._input_path):
-            raise excp.HSEInputPathError("Invalid input path '{}'".format(self._input_path))
+            raise excp.HSECommandLineError("Invalid input path '{}'".format(self._input_path))
         elif os.path.isfile(self._input_path):
             return [self._input_path]
         else:
@@ -377,6 +400,8 @@ if __name__ == '__main__':
     print('Input path : {}'.format(emuopt.input_path))
     print('Output path: {}'.format(emuopt.output_path))
     print('interim dir: {}'.format(emuopt.interim_dir))
+    for var, val in emuopt.cmdenv:
+        print('cmdenv     : {}={}'.format(var, val))
     
     try:
         check_mr(emuopt.mapper, emuopt.reducer)
@@ -384,7 +409,8 @@ if __name__ == '__main__':
             emuopt.emulator_path,
             emuopt.mapper, emuopt.reducer,
             emuopt.input_path, emuopt.output_path,
-            emuopt._interim_dir
+            emuopt.interim_dir,
+            emuopt.cmdenv
             )
         emulator.execute()
     except excp.HSEException as e:

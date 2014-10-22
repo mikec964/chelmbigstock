@@ -44,25 +44,16 @@ class HSEReducerError(HSEException):
         self.msg = msg
 
 
-class HSEInputPathError(HSEException):
+class HSECommandLineError(HSEException):
     """
-    Raised when input path is invalid
+    Raised when command line options are invalid
     """
     def __init__(self, msg):
         self.msg = msg
-
 
 class HSEOutputPathError(HSEException):
     """
     Raised when output path already exists
-    """
-    def __init__(self, msg):
-        self.msg = msg
-
-
-class HSEInterimDirError(HSEException):
-    """
-    Raised when interim directory already exists
     """
     def __init__(self, msg):
         self.msg = msg
