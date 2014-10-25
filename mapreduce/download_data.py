@@ -78,15 +78,17 @@ if __name__ == '__main__':
             self.data_dir = 'data'
             option_handlers = [ self.set_max,
                                 self.set_symbol_file_name,
+                                self.set_data_dir,
                                 self.set_from_date,
-                                self.set_to_date,
-                                self.set_data_dir ]
+                                self.set_to_date ]
 
             for i in range(min(len(option_handlers), len(argv)-1)):
                 option_handlers[i](argv[i+1])
 
         def set_max(self, option):
             self.max = int(option)
+            if self.max == 0:
+                self.max = None
 
         def set_symbol_file_name(self, option):
             self.symbol_file_name = option
@@ -100,6 +102,10 @@ if __name__ == '__main__':
         def set_data_dir(self, option):
             self.data_dir = option
 
+    if sys.argv[1][0] == '-':
+        print('Usage: {} [max_stocks [,symbol_file [,data_dir, [,from_date [,to_date]]]]]'
+                .format(os.path.basename(sys.argv[0])))
+        sys.exit(1)
     opt = options(sys.argv)
 
     symbols = read_symbols(opt.symbol_file_name)

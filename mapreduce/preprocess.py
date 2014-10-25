@@ -108,6 +108,10 @@ if __name__ == '__main__':
         def set_processed_file_name(self, option):
             self.processed_file_name = option
 
+    if sys.argv[1][0] == '-':
+        print('Usage: {} [max_stocks [,symbol_file [,data_dir, [,result_file]]]]'
+                .format(os.path.basename(sys.argv[0])))
+        sys.exit(1)
     opt = options(sys.argv)
 
     symbols = read_symbols(opt.symbol_file_name)
