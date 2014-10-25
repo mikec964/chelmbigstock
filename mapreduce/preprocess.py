@@ -98,6 +98,8 @@ if __name__ == '__main__':
 
         def set_max(self, option):
             self.max = int(option)
+            if self.max == 0:
+                self.max = None
 
         def set_symbol_file_name(self, option):
             self.symbol_file_name = option
