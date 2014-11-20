@@ -46,15 +46,15 @@ class TestCommandLineOption(unittest.TestCase):
         self.opt_unknown2 = 'youdonotknowme'
     
     def testCorrectOptions(self):
-        var = 'HSETESTVAR'
-        val = 'hsetestval'
-        opt_val = var + '=' + val
+        env_var = 'HSETESTVAR'
+        env_val = 'hsetestenv_val'
+        val_cmdenv = env_var + '=' + env_val
         list_opts = [ [self.opt_input, self.data_input],
                       [self.opt_output, self.data_output],
                       [self.opt_interim, self.data_interim],
                       [self.opt_mapper, self.data_mapper],
                       [self.opt_reducer, self.data_reducer],
-                      [self.opt_cmdenv, opt_val] ]
+                      [self.opt_cmdenv, val_cmdenv] ]
         
         emu_path = os.path.dirname(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..'))
         pseud_opts = make_opt_list(list_opts)
@@ -65,9 +65,9 @@ class TestCommandLineOption(unittest.TestCase):
         self.assertEqual(args.interim_dir, self.data_interim_path, 'Interim directory')
         self.assertEqual(args.mapper, self.data_mapper_path, 'Mapper')
         self.assertEqual(args.reducer, self.data_reducer_path, 'Reducer')
-        ret_var, ret_val = args.cmdenv[0]
-        self.assertEqual(ret_var, var, "Environment variable doesn't exist")
-        self.assertEqual(ret_val, val, "Environment variable wrong value")
+        ret_env_var, ret_env_val = args.cmdenv[0]
+        self.assertEqual(ret_env_var, env_var, "Environment variable doesn't exist")
+        self.assertEqual(ret_env_val, env_val, "Environment variable wrong value")
         
         # change the order of options
         random.shuffle(list_opts)
@@ -78,9 +78,9 @@ class TestCommandLineOption(unittest.TestCase):
         self.assertEqual(args.interim_dir, self.data_interim_path, 'Interim directory')
         self.assertEqual(args.mapper, self.data_mapper_path, 'Mapper')
         self.assertEqual(args.reducer, self.data_reducer_path, 'Reducer')
-        ret_var, ret_val = args.cmdenv[0]
-        self.assertEqual(ret_var, var, "Environment variable doesn't exist")
-        self.assertEqual(ret_val, val, "Environment variable wrong value")
+        ret_env_var, ret_env_val = args.cmdenv[0]
+        self.assertEqual(ret_env_var, env_var, "Environment variable doesn't exist")
+        self.assertEqual(ret_env_val, env_val, "Environment variable wrong value")
 
         # change the order of options again
         random.shuffle(list_opts)
@@ -91,9 +91,9 @@ class TestCommandLineOption(unittest.TestCase):
         self.assertEqual(args.interim_dir, self.data_interim_path, 'Interim directory')
         self.assertEqual(args.mapper, self.data_mapper_path, 'Mapper')
         self.assertEqual(args.reducer, self.data_reducer_path, 'Reducer')
-        ret_var, ret_val = args.cmdenv[0]
-        self.assertEqual(ret_var, var, "Environment variable doesn't exist")
-        self.assertEqual(ret_val, val, "Environment variable wrong value")
+        ret_env_var, ret_env_val = args.cmdenv[0]
+        self.assertEqual(ret_env_var, env_var, "Environment variable doesn't exist")
+        self.assertEqual(ret_env_val, env_val, "Environment variable wrong value")
 
     def testCmdenvThree(self):
         '''
