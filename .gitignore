@@ -12,4 +12,4 @@ data/stocks_read.txt
 data/*.csv
 *.coverage
 *.coveragerc
-
+.*sw?
