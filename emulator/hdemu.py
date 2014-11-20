@@ -87,12 +87,21 @@ def analyze_argv(argv):
             self._cmdenv_dict = {}
             self._cmdenv = None     # default value
 
+            def sts_files(arg):
+                file_list = arg.split(',')
+                if len(file_list) > 0:
+                    self._files.extend(file_list)
+                return sts_init
+            sts_files.opt = '-files'
+            self._files = []        # default value
+
             opt_stss = { sts_mapper.opt : sts_mapper,
                          sts_reducer.opt : sts_reducer,
                          sts_input.opt : sts_input,
                          sts_output.opt : sts_output,
                          sts_interimdir.opt : sts_interimdir,
-                         sts_cmdenv.opt : sts_cmdenv
+                         sts_cmdenv.opt : sts_cmdenv,
+                         sts_files.opt : sts_files
                        }
 
             # parse options
@@ -132,6 +141,10 @@ def analyze_argv(argv):
             if self._cmdenv is None:
                 self._cmdenv = [ (var, self._cmdenv_dict[var]) for var in iter(self._cmdenv_dict) ]
             return self._cmdenv
+
+        @property
+        def files(self):
+            return self._files
     
     return CommandLineArguments(argv)
 
@@ -402,6 +415,8 @@ if __name__ == '__main__':
     print('interim dir: {}'.format(emuopt.interim_dir))
     for var, val in emuopt.cmdenv:
         print('cmdenv     : {}={}'.format(var, val))
+    for f in emuopt.files:
+        print('files      : {}'.format(f))
     
     try:
         check_mr(emuopt.mapper, emuopt.reducer)

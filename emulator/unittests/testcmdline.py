@@ -31,6 +31,7 @@ class TestCommandLineOption(unittest.TestCase):
         self.opt_mapper = '-mapper'
         self.opt_reducer = '-reducer'
         self.opt_cmdenv = '-cmdenv'
+        self.opt_files = '-files'
         self.data_input = 'data_input'
         self.data_input_path = os.path.abspath(self.data_input)
         self.data_output = 'data_output'
@@ -46,16 +47,25 @@ class TestCommandLineOption(unittest.TestCase):
         self.opt_unknown2 = 'youdonotknowme'
     
     def testCorrectOptions(self):
+        # -cmdenv data
         env_var = 'HSETESTVAR'
         env_val = 'hsetestenv_val'
         val_cmdenv = env_var + '=' + env_val
+
+        # -files data
+        files = [ 'file1.txt', 'dir/file2.txt' ]
+        val_files = ','.join(files)
+        num_files = len(files)
+
         list_opts = [ [self.opt_input, self.data_input],
                       [self.opt_output, self.data_output],
                       [self.opt_interim, self.data_interim],
                       [self.opt_mapper, self.data_mapper],
                       [self.opt_reducer, self.data_reducer],
-                      [self.opt_cmdenv, val_cmdenv] ]
-        
+                      [self.opt_cmdenv, val_cmdenv],
+                      [self.opt_files, val_files]
+                    ]
+
         emu_path = os.path.dirname(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..'))
         pseud_opts = make_opt_list(list_opts)
         args = emu.analyze_argv(pseud_opts)
@@ -65,10 +75,16 @@ class TestCommandLineOption(unittest.TestCase):
         self.assertEqual(args.interim_dir, self.data_interim_path, 'Interim directory')
         self.assertEqual(args.mapper, self.data_mapper_path, 'Mapper')
         self.assertEqual(args.reducer, self.data_reducer_path, 'Reducer')
+
         ret_env_var, ret_env_val = args.cmdenv[0]
         self.assertEqual(ret_env_var, env_var, "Environment variable doesn't exist")
         self.assertEqual(ret_env_val, env_val, "Environment variable wrong value")
-        
+
+        list_files = args.files
+        self.assertEqual(len(list_files), num_files, 'Number of files are incorrect')
+        for f in files:
+            self.assertIn(f, list_files, "{} is not included in file list".format(f))
+
         # change the order of options
         random.shuffle(list_opts)
         pseud_opts = make_opt_list(list_opts)
@@ -82,6 +98,11 @@ class TestCommandLineOption(unittest.TestCase):
         self.assertEqual(ret_env_var, env_var, "Environment variable doesn't exist")
         self.assertEqual(ret_env_val, env_val, "Environment variable wrong value")
 
+        list_files = args.files
+        self.assertEqual(len(list_files), num_files, 'Number of files are incorrect')
+        for f in files:
+            self.assertIn(f, list_files, "{} is not included in file list".format(f))
+
         # change the order of options again
         random.shuffle(list_opts)
         pseud_opts = make_opt_list(list_opts)
@@ -94,6 +115,11 @@ class TestCommandLineOption(unittest.TestCase):
         ret_env_var, ret_env_val = args.cmdenv[0]
         self.assertEqual(ret_env_var, env_var, "Environment variable doesn't exist")
         self.assertEqual(ret_env_val, env_val, "Environment variable wrong value")
+
+        list_files = args.files
+        self.assertEqual(len(list_files), num_files, 'Number of files are incorrect')
+        for f in files:
+            self.assertIn(f, list_files, "{} is not included in file list".format(f))
 
     def testCmdenvThree(self):
         '''
