@@ -177,6 +177,26 @@ class StdioResetter(object):
 
 
 #
+# Global context setter of the emulator
+#
+class EmuGlobalContext(object):
+    """
+    """
+    def __init__(self, files = None):
+        self._files = files
+
+    def __enter__(self):
+        if self._files is None or len(self._files):
+            self._org_path = None
+        else:
+            self._org_path = os.getcwd()
+
+    def __exit__(self, *args):
+        if self._org_path is not None:
+            os.chdir(self._org_path)
+
+
+#
 # execute user script
 #
 def execute_user_scirpt(type_name, file_name, f_in, f_out):
@@ -225,7 +245,8 @@ class HadoopStreamEmulator(object):
             mapper, reducer,
             input_path, output_path,
             interim_dir = None,
-            cmdenv = None):
+            cmdenv = None,
+            files = None):
         """
         Parameters:
             emu_path: the home directory of the emulator
