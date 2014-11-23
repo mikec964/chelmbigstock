@@ -12,6 +12,7 @@ from __future__ import print_function
 import os
 import sys
 import tempfile as tf
+import shutil as su
 import hseexceptions as excp
 from TextInputFormat import input_formatter
 from TextOutputFormat import output_formatter
@@ -181,19 +182,59 @@ class StdioResetter(object):
 #
 class EmuGlobalContext(object):
     """
+    Set up the runtime environment for mapper/reducer
     """
-    def __init__(self, files = None):
+    def __init__(self, files = None, mapper = None, reducer = None):
         self._files = files
+        self._mapper = mapper
+        self._reducer = reducer
 
     def __enter__(self):
-        if self._files is None or len(self._files):
+        if self._files is None or len(self._files) == 0:
             self._org_path = None
         else:
             self._org_path = os.getcwd()
+            self._tmp_path = tf.mkdtemp()
+            try:
+                for p in self._files:
+                    if os.path.isdir(p):
+                        base = os.path.basename(p)
+                        su.copytree(p, os.path.join(self._tmp_path, base))
+                    else:
+                        su.copy(p, self._tmp_path)
+
+                if self._mapper is not None:
+                    su.copy(self._mapper, self._tmp_path)
+                    self._mapper = os.path.abspath(
+                            os.path.join(self._tmp_path, os.path.basename(self._mapper)))
+
+                if self._reducer is not None:
+                    su.copy(self._reducer, self._tmp_path)
+                    self._reducer = os.path.abspath(
+                            os.path.join(self._tmp_path, os.path.basename(self._reducer)))
+
+                os.chdir(self._tmp_path)
+            except:
+                self._org_path = None
+                su.rmtree(self._tmp_path)
+                raise
+
+        return self
 
     def __exit__(self, *args):
         if self._org_path is not None:
             os.chdir(self._org_path)
+            su.rmtree(self._tmp_path)
+
+        return False
+
+    @property
+    def mapper(self):
+        return self._mapper
+
+    @property
+    def reducer(self):
+        return self._reducer
 
 
 #
