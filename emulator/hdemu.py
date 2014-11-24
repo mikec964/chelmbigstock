@@ -182,7 +182,11 @@ class StdioResetter(object):
 #
 class EmuGlobalContext(object):
     """
-    Set up the runtime environment for mapper/reducer
+    Context manager to set up the runtime environment for mapper/reducer.
+    Make a temporary directory, copy given files to the temporary directory,
+    and change the working directory to the temp directory.
+    On exit, change the working directory back to the original and delete
+    the temporary directory.
     """
     def __init__(self, files = None):
         self._files = files
@@ -203,6 +207,8 @@ class EmuGlobalContext(object):
 
                 os.chdir(self._tmp_path)
             except:
+                # if an exeption happened, restore the orginal status and
+                # pass the exception to the caller.
                 self._org_path = None
                 su.rmtree(self._tmp_path)
                 raise
@@ -435,7 +441,7 @@ def is_script_ok(fn_script):
 
 def check_mr(fn_mapper, fn_reducer):
     """
-    make sure a mapper and reducer is value
+    make sure the given mapper and reducer exist
     """
     try:
         is_script_ok(fn_mapper)
