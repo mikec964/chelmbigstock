@@ -89,7 +89,7 @@ def analyze_argv(argv):
             self._cmdenv = None     # default value
 
             def sts_files(arg):
-                file_list = map(os.path.abspath, arg.split(','))
+                file_list = [os.path.abspath(f) for f in arg.split(',')]
                 if len(file_list) > 0:
                     self._files.extend(file_list)
                 return sts_init
