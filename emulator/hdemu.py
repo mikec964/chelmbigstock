@@ -89,7 +89,7 @@ def analyze_argv(argv):
             self._cmdenv = None     # default value
 
             def sts_files(arg):
-                file_list = arg.split(',')
+                file_list = map(os.path.abspath, arg.split(','))
                 if len(file_list) > 0:
                     self._files.extend(file_list)
                 return sts_init
@@ -184,10 +184,8 @@ class EmuGlobalContext(object):
     """
     Set up the runtime environment for mapper/reducer
     """
-    def __init__(self, files = None, mapper = None, reducer = None):
+    def __init__(self, files = None):
         self._files = files
-        self._mapper = mapper
-        self._reducer = reducer
 
     def __enter__(self):
         if self._files is None or len(self._files) == 0:
@@ -203,16 +201,6 @@ class EmuGlobalContext(object):
                     else:
                         su.copy(p, self._tmp_path)
 
-                if self._mapper is not None:
-                    su.copy(self._mapper, self._tmp_path)
-                    self._mapper = os.path.abspath(
-                            os.path.join(self._tmp_path, os.path.basename(self._mapper)))
-
-                if self._reducer is not None:
-                    su.copy(self._reducer, self._tmp_path)
-                    self._reducer = os.path.abspath(
-                            os.path.join(self._tmp_path, os.path.basename(self._reducer)))
-
                 os.chdir(self._tmp_path)
             except:
                 self._org_path = None
@@ -227,14 +215,6 @@ class EmuGlobalContext(object):
             su.rmtree(self._tmp_path)
 
         return False
-
-    @property
-    def mapper(self):
-        return self._mapper
-
-    @property
-    def reducer(self):
-        return self._reducer
 
 
 #
@@ -298,6 +278,7 @@ class HadoopStreamEmulator(object):
             interim_dir: the directory to store interim results
                          mapper input/ouput, reducer input/output
             cmdenv:    : the list of environment variable to pass mapper/reducer
+            files      : files to be copied to the mapper/reducer environment
         """
         if os.path.exists(output_path):
             raise excp.HSECommandLineError("Output path '{}' already exists".format(output_path))
@@ -309,6 +290,7 @@ class HadoopStreamEmulator(object):
             for var, val in cmdenv:
                 os.environ[var] = val
 
+        self._files = files
         self._my_python = 'python'
         self._my_path = emu_path
         self._mapper = mapper
@@ -428,10 +410,11 @@ class HadoopStreamEmulator(object):
         """
         execute MapReduce job
         """
-        if self._interim_dir == None:
-            self._execute_temp()
-        else:
-            self._execute_interim()
+        with EmuGlobalContext(self._files) as context:
+            if self._interim_dir == None:
+                self._execute_temp()
+            else:
+                self._execute_interim()
 
         print('**** mapreduce job completed ****')
 
@@ -487,7 +470,8 @@ if __name__ == '__main__':
             emuopt.mapper, emuopt.reducer,
             emuopt.input_path, emuopt.output_path,
             emuopt.interim_dir,
-            emuopt.cmdenv
+            emuopt.cmdenv,
+            emuopt.files
             )
         emulator.execute()
     except excp.HSEException as e:

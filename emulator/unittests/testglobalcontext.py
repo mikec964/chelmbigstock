@@ -33,27 +33,6 @@ class TestGlobalContext(unittest.TestCase):
     _nested_dir = 'nested'
     _nested_file1 = 'file1.txt'
     _nested_file2 = 'file2.txt'
-    _mapper = os.path.join(_data_path, 'mockmapper.py')
-    _reducer = os.path.join(_data_path, 'mockreducer.py')
-
-    def check_mr(self, context):
-        '''
-        check if mapper and reducer are correctly copied
-        '''
-        base_mapper = os.path.basename(self._mapper)
-        base_reducer = os.path.basename(self._reducer)
-        self.assertTrue(os.path.exists(base_mapper),
-                "mapper doesn't exist")
-        self.assertTrue(os.path.exists(base_reducer),
-                "reducer doesn't exist")
-        self.assertEqual(base_mapper, os.path.basename(context.mapper),
-                "mapper name doesn't match")
-        self.assertNotEqual(base_mapper, context.mapper,
-                "mapper path didn't changed")
-        self.assertEqual(base_reducer, os.path.basename(context.reducer),
-                "reducer name doesn't match")
-        self.assertNotEqual(base_reducer, context.reducer,
-                "reducer path didn't changed")
 
     def testEmptyFiles(self):
         '''
@@ -61,7 +40,7 @@ class TestGlobalContext(unittest.TestCase):
         '''
         org_path = os.getcwd()
         files = []
-        with emu.EmuGlobalContext(files, self._mapper, self._reducer) as context:
+        with emu.EmuGlobalContext(files) as context:
             cur_path = os.getcwd()
             self.assertEqual(org_path, cur_path,
                     "Empty files test: current directory changed in with:" + cur_path)
@@ -75,13 +54,12 @@ class TestGlobalContext(unittest.TestCase):
         org_path = os.getcwd()
         files = [os.path.join(self._data_path, self._data_file)]
 
-        with emu.EmuGlobalContext(files, self._mapper, self._reducer) as context:
+        with emu.EmuGlobalContext(files) as context:
             cur_path = os.getcwd()
             self.assertNotEqual(org_path, cur_path,
                     "A file test: current directory didn't changed in with")
             self.assertTrue(os.path.exists(self._data_file),
                     "A file test: data file doesn't exist")
-            self.check_mr(context)
             abs_data_file = os.path.abspath(self._data_file)
 
         after_path = os.getcwd()
@@ -100,7 +78,7 @@ class TestGlobalContext(unittest.TestCase):
         nfile2 = os.path.join(self._nested_dir, self._nested_file2)
         path = [os.path.join(self._data_path, self._nested_dir)]
 
-        with emu.EmuGlobalContext(path, self._mapper, self._reducer) as context:
+        with emu.EmuGlobalContext(path) as context:
             cur_path = os.getcwd()
             self.assertNotEqual(org_path, cur_path,
                     "A directory test: current directory didn't change in with")
@@ -110,7 +88,6 @@ class TestGlobalContext(unittest.TestCase):
                     "A directory test: file 1 doesn't exist in with")
             self.assertTrue(os.path.exists(nfile2),
                     "A directory test: file 2 doesn't exist in with")
-            self.check_mr(context)
             abs_nested_dir = os.path.abspath(self._nested_dir)
 
         after_path = os.getcwd()
@@ -129,7 +106,7 @@ class TestGlobalContext(unittest.TestCase):
         nfile1 = os.path.join(self._nested_dir, self._nested_file1)
         nfile2 = os.path.join(self._nested_dir, self._nested_file2)
 
-        with emu.EmuGlobalContext(paths, self._mapper, self._reducer) as context:
+        with emu.EmuGlobalContext(paths) as context:
             cur_path = os.getcwd()
             self.assertNotEqual(org_path, cur_path,
                     "Complex test: current directory didn't change in with")
@@ -141,7 +118,6 @@ class TestGlobalContext(unittest.TestCase):
                     "A directory test: file 1 doesn't exist in with")
             self.assertTrue(os.path.exists(nfile2),
                     "A directory test: file 2 doesn't exist in with")
-            self.check_mr(context)
             abs_data_file = os.path.abspath(self._data_file)
             abs_nested_dir = os.path.abspath(self._nested_dir)
 
@@ -163,7 +139,7 @@ class TestGlobalContext(unittest.TestCase):
         raised = False
 
         try:
-            with emu.EmuGlobalContext(files, self._mapper, self._reducer):
+            with emu.EmuGlobalContext(files):
                 cur_path = os.getcwd()
                 self.assertNotEqual(org_path, cur_path,
                         "A file test: current directory didn't changed in with")
@@ -183,7 +159,7 @@ class TestGlobalContext(unittest.TestCase):
         '''
         files = [os.path.join(self._data_path, self._data_file)]
 
-        with emu.EmuGlobalContext(files, self._mapper, self._reducer):
+        with emu.EmuGlobalContext(files):
             cur_path = os.getcwd()
             self.assertNotEqual(org_path, cur_path,
                     "A file test: current directory didn't changed in with")
@@ -201,7 +177,7 @@ class TestGlobalContext(unittest.TestCase):
         files = [os.path.join(self._data_path, 'does_not_exist')]
 
         try:
-            with emu.EmuGlobalContext(files, self._mapper, self._reducer) as context:
+            with emu.EmuGlobalContext(files) as context:
                 self.assertTrue(True, "Wrong file test: Shouldn't come in here")
         except IOError as e:
             pass # Expected
