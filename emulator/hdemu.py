@@ -165,14 +165,18 @@ class StdioResetter(object):
             new_stdout: File object to set to system stdout. If None, keeps
                         the current stdout
         """
+        self._new_stdin = new_stdin
+        self._new_stdout = new_stdout
+
+    def __enter__(self):
         self._org_stdin = sys.stdin
         self._org_stdout = sys.stdout
-        if new_stdin != None:
-            sys.stdin = new_stdin
-        if new_stdout != None:
-            sys.stdout = new_stdout
+        if self._new_stdin != None:
+            sys.stdin = self._new_stdin
+        if self._new_stdout != None:
+            sys.stdout = self._new_stdout
 
-    def restore(self):
+    def __exit__(self, *args):
         sys.stdin = self._org_stdin
         sys.stdout = self._org_stdout
 
@@ -249,9 +253,8 @@ def execute_user_scirpt(type_name, file_name, f_in, f_out):
         raise excp.HSEMapperError('{} {} type error: quit'.format(type_name, file_name))
 
     # execute user script
-    org_stdio = StdioResetter(f_in, f_out)
-    exec(user_exe, globals())
-    org_stdio.restore()
+    with StdioResetter(f_in, f_out):
+        exec(user_exe, globals())
 
 
 #
