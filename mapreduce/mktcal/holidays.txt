@@ -1,0 +1,26 @@
+# Holiday list
+# One holiday per line.
+# Comment from '#' (pound) to EOL.
+#
+# Data source:
+#    the holidays in 2015 and 2016
+#    https://www.nyse.com/markets/hours-calendars
+#
+2015-01-01  # New Years Day
+2015-01-19  # Martin Luther King, Jr. Day
+2015-02-16  # Washingtons Birthday
+2015-04-03  # Good Friday
+2015-05-25  # Memorial Day
+2015-07-03  # Independence Day (observed)
+2015-09-07  # Labor Day
+2015-11-26  # Thanksgiving Day
+2015-12-25  # Christmas Day
+2016-01-01  # New Years Day
+2016-01-18  # Martin Luther King, Jr. Day
+2016-02-15  # Washingtons Birthday
+2016-03-25  # Good Friday
+2016-05-30  # Memorial Day
+2016-07-04  # Independence Day
+2016-09-05  # Labor Day
+2016-11-24  # Thanksgiving Day
+2016-12-26  # Christmas Day (observed)

@@ -5,12 +5,14 @@ mktcal.py
 Saves open dates of the stock market from 1960 to 2016
 Takes the dates between 1960 and 2014 from the actual data
 
-Data source:
-    the holidays in 2015 and 2016
-    https://www.nyse.com/markets/hours-calendars
+Source file:
+    holidays.txt
 
 Result:
     mktcal.csv
+
+Jan 21, 2015
+@author Hideki Ikeda
 '''
 
 import sys
@@ -28,27 +30,6 @@ First_day = datetime(2015,1,1)
 
 # the next day of the last day of 2016
 Last_day = datetime(2017,1,1)
-
-# Holidays in 2015 and 2016 in ISO 8601 format
-ISO_holidays15_16 = [ '2015-01-01'  # New Years Day
-                    , '2015-01-19'  # Martin Luther King, Jr. Day
-                    , '2015-02-16'  # Washington's Birthday
-                    , '2015-04-03'  # Good Friday
-                    , '2015-05-25'  # Memorial Day
-                    , '2015-07-03'  # Independence Day (observed)
-                    , '2015-09-07'  # Labor Day
-                    , '2015-11-26'  # Thanksgiving Day
-                    , '2015-12-25'  # Christmas Day
-                    , '2016-01-01'
-                    , '2016-01-18'
-                    , '2016-02-15'
-                    , '2016-03-25'
-                    , '2016-05-30'
-                    , '2016-07-04'
-                    , '2016-09-05'
-                    , '2016-11-24'
-                    , '2016-12-26'  # observed
-                    ]
 
 Weekends = [ 5, # Saturday
              6  # Sunday
@@ -68,12 +49,27 @@ def date_iter(start, end):
         current += timedelta(days = 1)
 
 
+def get_holidays_after_14():
+    holidays = []
+    # Holidays in 2015 and after in ISO 8601 format
+    with open('holidays.txt', 'r') as f_holidays:
+        for line in f_holidays:
+            date_comment = line.split('#', 1)
+            if len(date_comment) > 0:
+                date_str = date_comment[0].strip()
+                if len(date_str) > 0:
+                    holidays.append(date_comment[0].strip())
+
+    return holidays
+
+
+
 def get_dates_after_14():
     '''
     Returns the list of the open dates
     '''
     # converts holidays in ISO format string to datetime object
-    holidays = [ datetime.strptime(d, Isoformat) for d in ISO_holidays15_16 ]
+    holidays = [ datetime.strptime(d, Isoformat) for d in get_holidays_after_14() ]
 
     opendates = []
     for cur_date in date_iter(First_day, Last_day):
