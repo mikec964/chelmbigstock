@@ -35,7 +35,6 @@ def download_stocks(symbols, from_date = None, to_date = None, f_result = 'stock
         exceptions which datetime.datetime.strptime throws
         exceptions which the symbols iterable object throws
     '''
-    print(from_date, to_date, data_dir)
 
     # make part of the url which is common in all stocks
     url_list = []
@@ -61,7 +60,7 @@ def download_stocks(symbols, from_date = None, to_date = None, f_result = 'stock
             try:
                 with urlreq.urlopen(url) as src:
                     for bline in src:
-                        dst.write(symbol + ':' + bline.decode('utf-8'))
+                        dst.write(symbol + ',' + bline.decode('utf-8'))
             except urlerr.URLError as e:
                 print('Failed to download "{}", Reason:"{}"; Skip'.format(symbol, e.reason), file=sys.stderr)
                 continue
