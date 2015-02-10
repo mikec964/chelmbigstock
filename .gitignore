@@ -13,3 +13,5 @@ data/*.csv
 *.coverage
 *.coveragerc
 .*sw?
+mapreduce/input
+mapreduce/output
