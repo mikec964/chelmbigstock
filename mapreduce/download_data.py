@@ -99,7 +99,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--symbol_file', default='stock_symbols.txt',
             metavar='stock_symbol_file', dest='symbol_file_name',
             help='A text file contains stock symbols. Default:stock_symbols.txt')
-    parser.add_argument('-m', '--max_stocks', default = None,
+    parser.add_argument('-m', '--max_stocks', type=int, default = None,
             metavar='N', dest='max',
             help='the maxinum number of stocks to be processed. Default:All')
     parser.add_argument('-r', '--result_file', default='stock.csv',
