@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 '''
 Oct 23, 2014
@@ -9,8 +9,7 @@ import argparse
 import datetime
 import os
 import sys
-from urllib import request as urlreq
-from urllib import error as urlerr
+import urllib2
 
 url_header='http://ichart.finance.yahoo.com/table.csv?s={sym}'
 url_from='&a={m}&b={d}&c={y}'
@@ -55,17 +54,20 @@ def download_stocks(symbols, from_date = None, to_date = None, f_result = 'stock
     with open(f_result, 'w') as dst:
         for symbol in symbols:
             url = url_header.format(sym = symbol) + url_last
-            print('Downloading {} ...'.format(symbol))
+            print 'Downloading {} ...'.format(symbol)
 
             try:
-                with urlreq.urlopen(url) as src:
+                src = urllib2.urlopen(url)
+                try:
                     for bline in src:
                         dst.write(symbol + ',' + bline.decode('utf-8'))
-            except urlerr.URLError as e:
-                print('Failed to download "{}", Reason:"{}"; Skip'.format(symbol, e.reason), file=sys.stderr)
+                finally:
+                    src.close()
+            except urllib2.URLError as e:
+                print >> sys.stderr, 'Failed to download "{}", Reason:"{}"; Skip'.format(symbol, e.reason)
                 continue
             except IOError:
-                print('Failed to write to "{}": continue'.format(file_name), file=sys.stderr)
+                print >> sys.stderr, 'Failed to write to "{}": continue'.format(file_name)
                 continue
 
 
