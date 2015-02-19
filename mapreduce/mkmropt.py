@@ -10,6 +10,8 @@ Creates options for MapReduce
 
 import os
 import sys
+import datetime as dt
+import bisect as bi
 
 
 # data type
@@ -45,7 +47,7 @@ def read_symbols(file_name, max_stocks = None):
     return symbols
 
 
-def make_train_cv_data_sets(symbols, cv_factor, f_dst):
+def make_symbol_sets(symbols, cv_factor, f_dst):
     '''
     Categorize stock symbols into train data or CV data
     Input:
@@ -58,6 +60,33 @@ def make_train_cv_data_sets(symbols, cv_factor, f_dst):
     for symbol in symbols:
         print >> f_dst, '{}:{}'.format(gen.next(), symbol)
 
+def read_calendar(fn_cal):
+    '''
+    Read a market calendar file and returns list of dates
+    Input:
+        fn_cal  : file name of a calendar file
+    return
+        list of dates
+    '''
+    with open(fn_cal, 'r') as f_cal:
+        cal = [ dt.datetime.strptime(line.strip(), '%Y-%m-%d').date()
+                for line in f_cal ]
+    return cal
+
+def make_date_sets(ref_dates, test_dates, train_days, train_inc, future_day, f_dst):
+    '''
+    Make a list of dates whose stock values are used as feature and target.
+    The result is stored in the specifed file.
+    Input:
+        ref_dates   : list of reference dates (first dates of training dates)
+        test_dates  : list of test dates (first dates of test dates)
+        train_days  : difference between the first date and the last date
+                      of training/test date range
+        train_inc   : difference between each feature date in the date range
+        future_day  : difference between the first date and the target date
+        f_dst       : name of file where the reuslt is stored
+    '''
+    pass
 
 if __name__ == '__main__':
     print "not implemented yet"
