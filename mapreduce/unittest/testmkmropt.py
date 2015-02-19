@@ -17,7 +17,11 @@ import mkmropt as target
 
 
 class TestPreprocess(unittest.TestCase):
-    '''
+    ''')
+
+    def testExtractDates(self):
+        expected = [ dt.date(2015, 1, 2)
+
     Unit tests
     '''
 
@@ -125,7 +129,77 @@ class TestPreprocess(unittest.TestCase):
                     ,dt.date(2015, 1,28)
                     ,dt.date(2015, 1,29)
                     ,dt.date(2015, 1,30)
-2015-01-30
                    ]
         result = target.read_calendar(self.test_mktcal)
         self.assertEqual(expected, result)
+
+    def testExtractDatesExeption(self):
+        cal = [ dt.date(2015, 1, 2), dt.date(2015, 1, 5) ]
+        first = dt.date(2015, 1, 3)
+
+        # invalid train_days
+        self.assertRaises(ValueError, target.extract_dates, cal, first, 0, 1)
+        # invalid train_inc
+        self.assertRaises(ValueError, target.extract_dates, cal, first, 2, 0)
+
+    def testExtractDatesNone(self):
+        cal = [ dt.date(2015, 1, 2), dt.date(2015, 1, 5), dt.date(2015, 1, 6) ]
+
+        # the first date out of range
+        first = dt.date(2015, 1, 7)
+        self.assertIsNone(target.extract_dates(cal, first, 2, 1),
+                'first date out of range')
+
+        # the last date out of range
+        first - dt.date(2015, 1, 2)
+        self.assertIsNone(target.extract_dates(cal, first, 3, 1),
+                'last date out of range')
+
+    def testExtractDates(self):
+        cal = [ dt.date(2015, 1, 2)
+               ,dt.date(2015, 1, 5)
+               ,dt.date(2015, 1, 6)
+               ,dt.date(2015, 1, 7)
+               ,dt.date(2015, 1, 8)
+               ,dt.date(2015, 1, 9)
+               ,dt.date(2015, 1,12)
+               ,dt.date(2015, 1,13)
+               ,dt.date(2015, 1,14)
+               ,dt.date(2015, 1,15)
+               ,dt.date(2015, 1,16)
+               ,dt.date(2015, 1,20)
+               ,dt.date(2015, 1,21)
+               ,dt.date(2015, 1,22)
+               ,dt.date(2015, 1,23)
+               ,dt.date(2015, 1,26)
+               ,dt.date(2015, 1,27)
+               ,dt.date(2015, 1,28)
+               ,dt.date(2015, 1,29)
+               ,dt.date(2015, 1,30)
+              ]
+        # on date
+        first = dt.date(2015, 1, 5)
+        days = 10
+        inc = 3
+        expected = [ cal[1]
+                    ,cal[4]
+                    ,cal[7]
+                    ,cal[10]
+                   ]
+        result = target.extract_dates(cal, first, days, inc)
+        self.assertEqual(expected, result, 'On date ' + str(result))
+
+        # off date + very last in cal
+        first = dt.date(2015, 1, 18)
+        days = 9
+        inc = 2
+        expected = [ cal[11]
+                    ,cal[13]
+                    ,cal[15]
+                    ,cal[17]
+                    ,cal[19]
+                   ]
+        result = target.extract_dates(cal, first, days, inc)
+        self.assertEqual(expected, result,
+                'Off date + very last in cal' + str(result))
+

@@ -73,6 +73,28 @@ def read_calendar(fn_cal):
                 for line in f_cal ]
     return cal
 
+def extract_dates(cal, first_date, train_days, train_inc):
+    '''
+    Make a list of dates whose stock values are used as feature.
+    Input:
+        cal         : market calendar
+        first_date  : the first date of date range
+        train_days  : difference between the first date and the last date
+                      of training/test date range
+        train_inc   : difference between each feature date in the date range
+    Return:
+        The list of dates. If calendar doesn't have enough dates, returns None.
+    '''
+    if train_days < 1 or train_inc < 1:
+        raise ValueError
+
+    # get index of the first date in cal. If there is no exact date,
+    # returns the next open date
+    i_first = bi.bisect_left(cal, first_date)
+    if i_first + train_days > len(cal):
+        return None
+    return [ cal[i] for i in xrange(i_first, i_first + train_days, train_inc) ]
+
 def make_date_sets(ref_dates, test_dates, train_days, train_inc, future_day, f_dst):
     '''
     Make a list of dates whose stock values are used as feature and target.
@@ -85,6 +107,8 @@ def make_date_sets(ref_dates, test_dates, train_days, train_inc, future_day, f_d
         train_inc   : difference between each feature date in the date range
         future_day  : difference between the first date and the target date
         f_dst       : name of file where the reuslt is stored
+    return:
+        None
     '''
     pass
 
