@@ -12,6 +12,7 @@ import os
 import sys
 import datetime as dt
 import bisect as bi
+from collections import defaultdict
 
 
 # data type
@@ -73,7 +74,7 @@ def read_calendar(fn_cal):
                 for line in f_cal ]
     return cal
 
-def extract_dates(cal, first_date, train_days, train_inc):
+def extract_dates(cal, first_date, train_days, train_inc, future_day):
     '''
     Make a list of dates whose stock values are used as feature.
     Input:
@@ -82,10 +83,11 @@ def extract_dates(cal, first_date, train_days, train_inc):
         train_days  : difference between the first date and the last date
                       of training/test date range
         train_inc   : difference between each feature date in the date range
+        future_day  : difference between the first date and the target date
     Return:
         The list of dates. If calendar doesn't have enough dates, returns None.
     '''
-    if train_days < 1 or train_inc < 1:
+    if train_days < 1 or train_inc < 1 or future_day < train_days:
         raise ValueError
 
     # get index of the first date in cal. If there is no exact date,
@@ -93,13 +95,16 @@ def extract_dates(cal, first_date, train_days, train_inc):
     i_first = bi.bisect_left(cal, first_date)
     if i_first + train_days > len(cal):
         return None
-    return [ cal[i] for i in xrange(i_first, i_first + train_days, train_inc) ]
+    dates = [ cal[i] for i in xrange(i_first, i_first + train_days, train_inc) ]
+    dates.append(cal[i_first + future_day])
+    return dates
 
-def make_date_sets(ref_dates, test_dates, train_days, train_inc, future_day, f_dst):
+def make_date_sets(fn_cal, ref_dates, test_dates, train_days, train_inc, future_day, f_dst):
     '''
     Make a list of dates whose stock values are used as feature and target.
     The result is stored in the specifed file.
     Input:
+        fn_cal      : file name of market calendar
         ref_dates   : list of reference dates (first dates of training dates)
         test_dates  : list of test dates (first dates of test dates)
         train_days  : difference between the first date and the last date
@@ -110,7 +115,38 @@ def make_date_sets(ref_dates, test_dates, train_days, train_inc, future_day, f_d
     return:
         None
     '''
-    pass
+    if ref_dates is None or len(ref_dates) == 0:
+        raise ValueError("No reference dates")
+    if test_dates is None or len(test_dates) == 0:
+        raise ValueError("No test dates")
+    if train_days < 2:
+        raise ValueError("Not enough train days")
+    if train_inc < 1:
+        raise ValueError("train increment must be > 0")
+    if train_days <= train_inc:
+        raise ValueError("train_inc too large")
+    if future_day < train_days:
+        raise ValueError("future day before last train date")
+
+    cal = read_calendar(fn_cal)
+    dt_dict = defaultdict(list)
+
+    for idx, rdate in enumerate(ref_dates):
+        label = 'R{}'.format(idx)
+        dates = extract_dates(cal, rdate, train_days, train_inc, future_day)
+        for date in dates:
+            dt_dict[date].append(label)
+
+    for idx, tdate in enumerate(test_dates):
+        label = 'T{}'.format(idx)
+        dates = extract_dates(cal, tdate, train_days, train_inc, future_day)
+        for date in dates:
+            dt_dict[date].append(label)
+
+    for k in sorted(dt_dict):
+        datestr = k.strftime('%Y-%m-%d,')
+        labelstr = ':'.join(dt_dict[k])
+        print >> f_dst, datestr + labelstr
 
 if __name__ == '__main__':
     print "not implemented yet"
