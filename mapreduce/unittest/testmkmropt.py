@@ -42,6 +42,9 @@ class TestPreprocess(unittest.TestCase):
                 'expected_datesets.csv')
         cls.expected_datesets4 = os.path.join(cls.data_dir,
                 'expected_datesets4.csv')
+        cls.expected_option = os.path.join(cls.data_dir,
+                'expected_option.txt')
+        cls.fn_opt = os.path.join(cls.data_dir, 'result.csv')
 
         cls.test_bad_symbol_file = os.path.join(cls.data_dir, 'test_symbols_with_bad.txt')
         cls.expected_bad = os.path.join(cls.data_dir, 'expected_two.csv') # reuse the result
@@ -55,6 +58,8 @@ class TestPreprocess(unittest.TestCase):
             os.remove(cls.result_two)
         if os.path.exists(cls.result_bad):
             os.remove(cls.result_bad)
+        if os.path.exists(cls.fn_opt):
+            os.remove(cls.fn_opt)
 
     def testTypeGenerator(self):
         # default
@@ -213,40 +218,8 @@ class TestPreprocess(unittest.TestCase):
         self.assertEqual(expected, result,
                 'Off date + very last in cal' + str(result))
 
-    def testMakeDateSetsException(self):
-        # valid arguments
-        fn_cal = self.test_mktcal
-        refs = [dt.date(2015, 1, 3)]
-        tests = [dt.date(2015, 1, 10)]
-        days = 10
-        inc = 2
-        future = 10
-        with tempfile.TemporaryFile(mode='w') as f_dst:
-            # make sure no exception is raised with valid arguments
-            target.make_date_sets(fn_cal, refs, tests, days, inc, future, f_dst)
-
-            # empty reference
-            self.assertRaises(ValueError, target.make_date_sets,
-                    fn_cal, [], tests, days, inc, future, f_dst)
-            self.assertRaises(ValueError, target.make_date_sets,
-                    fn_cal, None, tests, days, inc, future, f_dst)
-
-            # empty test
-            self.assertRaises(ValueError, target.make_date_sets,
-                    fn_cal, refs, [], days, inc, future, f_dst)
-            self.assertRaises(ValueError, target.make_date_sets,
-                    fn_cal, refs, None, days, inc, future, f_dst)
-
-            # train_inc too large
-            self.assertRaises(ValueError, target.make_date_sets,
-                    fn_cal, refs, tests, days, days, future, f_dst)
-
-            # future_day before the last day of date range
-            self.assertRaises(ValueError, target.make_date_sets,
-                    fn_cal, refs, tests, days, inc, days-1, f_dst)
-
     def testMakeDateSets(self):
-        fn_cal = self.test_mktcal
+        cal = target.read_calendar(self.test_mktcal)
         refs = [dt.date(2015, 1, 3)]
         tests = [dt.date(2015, 1, 13)]
         days = 10
@@ -256,7 +229,7 @@ class TestPreprocess(unittest.TestCase):
         try:
             with tempfile.NamedTemporaryFile('w', prefix='dates_', delete=False) as f_dst:
                 fn_dst = f_dst.name
-                target.make_date_sets(fn_cal, refs, tests, days, inc, future, f_dst)
+                target.make_date_sets(cal, refs, tests, days, inc, future, f_dst)
             self.assertTrue(filecmp.cmp(self.expected_datesets, fn_dst))
         finally:
             pass
@@ -264,7 +237,7 @@ class TestPreprocess(unittest.TestCase):
                 os.remove(fn_dst)
 
     def testMakeDateSets4(self):
-        fn_cal = self.test_mktcal
+        cal = target.read_calendar(self.test_mktcal)
         refs = [dt.date(2015, 1, 3), dt.date(2015, 1, 6)]
         tests = [dt.date(2015, 1, 9), dt.date(2015, 1,11)]
         days = 8
@@ -274,9 +247,79 @@ class TestPreprocess(unittest.TestCase):
         try:
             with tempfile.NamedTemporaryFile('w', prefix='dates_', delete=False) as f_dst:
                 fn_dst = f_dst.name
-                target.make_date_sets(fn_cal, refs, tests, days, inc, future, f_dst)
+                target.make_date_sets(cal, refs, tests, days, inc, future, f_dst)
             self.assertTrue(filecmp.cmp(self.expected_datesets4, fn_dst))
         finally:
             if fn_dst is not None:
                 os.remove(fn_dst)
 
+    def testMakeOptionException(self):
+        # valid arguments
+        fn_cal = self.test_mktcal
+        refs = [dt.date(2015, 1, 3)]
+        tests = [dt.date(2015, 1, 10)]
+        days = 10
+        inc = 2
+        future = 10
+        fn_sym = self.test_symbol_file
+        cv_factor = 2
+        max_stocks = 10
+        fn_opt = self.fn_opt
+
+        # make sure no exception is raised with valid arguments
+        target.make_option_data(fn_cal, refs, tests, days, inc, future,
+                fn_sym, cv_factor, max_stocks, fn_opt)
+
+        # empty reference
+        self.assertRaises(ValueError, target.make_option_data,
+                fn_cal, [], tests, days, inc, future,
+                fn_sym, cv_factor, max_stocks, fn_opt)
+        self.assertRaises(ValueError, target.make_option_data,
+                fn_cal, None, tests, days, inc, future,
+                fn_sym, cv_factor, max_stocks, fn_opt)
+
+        # empty test
+        self.assertRaises(ValueError, target.make_option_data,
+                fn_cal, refs, [], days, inc, future,
+                fn_sym, cv_factor, max_stocks, fn_opt)
+        self.assertRaises(ValueError, target.make_option_data,
+                fn_cal, refs, None, days, inc, future,
+                fn_sym, cv_factor, max_stocks, fn_opt)
+
+        # train_inc too large
+        self.assertRaises(ValueError, target.make_option_data,
+                fn_cal, refs, tests, days, days, future,
+                fn_sym, cv_factor, max_stocks, fn_opt)
+
+        # future_day before the last day of date range
+        self.assertRaises(ValueError, target.make_option_data,
+                fn_cal, refs, tests, days, inc, days-1,
+                fn_sym, cv_factor, max_stocks, fn_opt)
+
+        # cv_factor >= 2
+        self.assertRaises(ValueError, target.make_option_data,
+                fn_cal, refs, tests, days, inc, future,
+                fn_sym, 1, max_stocks, fn_opt)
+
+        # max_stocks >= cv_factor
+        self.assertRaises(ValueError, target.make_option_data,
+                fn_cal, refs, tests, days, inc, future,
+                fn_sym, cv_factor, cv_factor-1, fn_opt)
+
+    def testMakeOption(self):
+        fn_cal = self.test_mktcal
+        refs = [dt.date(2015, 1, 3), dt.date(2015, 1, 6)]
+        tests = [dt.date(2015, 1, 9), dt.date(2015, 1,11)]
+        days = 8
+        inc = 1
+        future = 10
+        fn_sym = self.test_symbol_file
+        cv_factor = 3
+        max_stocks = None   # take everything
+        fn_opt = self.fn_opt
+
+        target.make_option_data(
+                fn_cal, refs, tests, days, inc, future,
+                fn_sym, cv_factor, max_stocks,
+                fn_opt)
+        self.assertTrue(filecmp.cmp(self.expected_option, fn_opt))

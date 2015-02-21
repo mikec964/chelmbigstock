@@ -35,7 +35,8 @@ def read_symbols(file_name, max_stocks = None):
     '''
     Read a stock symbol file in text and put stock symbols into a list.
     Input:
-        filename: the file name of the stock symbol file
+        filename   : the file name of the stock symbol file
+        max_stocks : the max number of stocks we use
     Return:
         The list of stock symbols
     Exceptions:
@@ -53,6 +54,8 @@ def make_symbol_sets(symbols, cv_factor, f_dst):
     Categorize stock symbols into train data or CV data
     Input:
         symbols   : iterable objects which contain stock symbols
+        cv_factor : determines what portion of stocks to put in cross validation
+                    set and what portion to leave in training set.
         f_dst     : file handle to store the processed data; must be writable
     Return:
         None
@@ -78,7 +81,7 @@ def extract_dates(cal, first_date, train_days, train_inc, future_day):
     '''
     Make a list of dates whose stock values are used as feature.
     Input:
-        cal         : market calendar
+        cal         : list of dates when the stock market opens
         first_date  : the first date of date range
         train_days  : difference between the first date and the last date
                       of training/test date range
@@ -99,36 +102,22 @@ def extract_dates(cal, first_date, train_days, train_inc, future_day):
     dates.append(cal[i_first + future_day])
     return dates
 
-def make_date_sets(fn_cal, ref_dates, test_dates, train_days, train_inc, future_day, f_dst):
+def make_date_sets(cal, ref_dates, test_dates, train_days, train_inc, future_day, f_dst):
     '''
     Make a list of dates whose stock values are used as feature and target.
     The result is stored in the specifed file.
     Input:
-        fn_cal      : file name of market calendar
+        cal         : list of dates when the stock market opens
         ref_dates   : list of reference dates (first dates of training dates)
         test_dates  : list of test dates (first dates of test dates)
         train_days  : difference between the first date and the last date
                       of training/test date range
         train_inc   : difference between each feature date in the date range
         future_day  : difference between the first date and the target date
-        f_dst       : name of file where the reuslt is stored
+        f_dst       : file handle to store the processed data; must be writable
     return:
         None
     '''
-    if ref_dates is None or len(ref_dates) == 0:
-        raise ValueError("No reference dates")
-    if test_dates is None or len(test_dates) == 0:
-        raise ValueError("No test dates")
-    if train_days < 2:
-        raise ValueError("Not enough train days")
-    if train_inc < 1:
-        raise ValueError("train increment must be > 0")
-    if train_days <= train_inc:
-        raise ValueError("train_inc too large")
-    if future_day < train_days:
-        raise ValueError("future day before last train date")
-
-    cal = read_calendar(fn_cal)
     dt_dict = defaultdict(list)
 
     for idx, rdate in enumerate(ref_dates):
@@ -147,6 +136,53 @@ def make_date_sets(fn_cal, ref_dates, test_dates, train_days, train_inc, future_
         datestr = k.strftime('%Y-%m-%d,')
         labelstr = ':'.join(dt_dict[k])
         print >> f_dst, datestr + labelstr
+
+def make_option_data(
+        fn_cal, ref_dates, test_dates, train_days, train_inc, future_day,
+        fn_sym, cv_factor, max_stocks,
+        fn_opt):
+    '''
+    Make an option data for MapReduce program of stock price prediction,
+    and store the data in a file
+    Input:
+        fn_cal     : file name of market calendar
+        ref_dates  : list of reference dates (first dates of training dates)
+        test_dates : list of test dates (first dates of test dates)
+        train_days : difference between the first date and the last date
+                     of training/test date range
+        train_inc  : difference between each feature date in the date range
+        future_day : difference between the first date and the target date
+        symbols    : iterable objects which contain stock symbols
+        cv_factor  : determines what portion of stocks to put in cross validation
+                     set and what portion to leave in training set.
+        max_stocks : the max number of stocks we use; If None, take all symbols
+        fn_opt     : name of file where the reuslt is stored
+    return:
+        None
+    '''
+    if ref_dates is None or len(ref_dates) == 0:
+        raise ValueError("No reference dates")
+    if test_dates is None or len(test_dates) == 0:
+        raise ValueError("No test dates")
+    if train_days < 2:
+        raise ValueError("Not enough train days")
+    if train_inc < 1:
+        raise ValueError("train increment must be > 0")
+    if train_days <= train_inc:
+        raise ValueError("train_inc too large")
+    if future_day < train_days:
+        raise ValueError("future day before last train date")
+    if cv_factor < 2:
+        raise ValueError("cv_factor must >= 2")
+    if max_stocks is not None and max_stocks < cv_factor:
+        raise ValueError("max_stocks must be equal to or larger than cv_factor")
+
+    symbols = read_symbols(fn_sym, max_stocks)
+    cal = read_calendar(fn_cal)
+    with open(fn_opt, 'w') as f_dst:
+        make_symbol_sets(symbols, cv_factor, f_dst)
+        make_date_sets(cal, ref_dates, test_dates,
+                train_days, train_inc, future_day, f_dst)
 
 if __name__ == '__main__':
     print "not implemented yet"
