@@ -13,6 +13,7 @@ import sys
 import datetime as dt
 import bisect as bi
 from collections import defaultdict
+import ConfigParser as cp
 
 
 # data type
@@ -183,6 +184,120 @@ def make_option_data(
         make_symbol_sets(symbols, cv_factor, f_dst)
         make_date_sets(cal, ref_dates, test_dates,
                 train_days, train_inc, future_day, f_dst)
+
+class ini_reader(object):
+    '''
+    Read an argument file in .ini format
+    '''
+    def __init__(self, arg_file):
+        '''
+        See the text for argument_reader for the details about arg_file
+        '''
+        section = 'mkmropt'
+        parser = cp.SafeConfigParser()
+        with open(arg_file, 'r') as fp_arg:
+            parser.readfp(fp_arg)
+
+            try:
+                self._calendar_file = parser.get(section, 'calendar_file')
+
+                datelist = parser.get(section, 'reference_dates')
+                datelist = datelist.split(',')
+                self._reference_dates = [
+                        dt.datetime.strptime( line.strip(), '%Y-%m-%d').date()
+                        for line in datelist ]
+
+                datelist = parser.get(section, 'test_dates')
+                datelist = datelist.split(',')
+                self._test_dates = [
+                        dt.datetime.strptime( line.strip(), '%Y-%m-%d').date()
+                        for line in datelist ]
+
+                self._train_days = parser.getint(section, 'train_days')
+
+                self._train_increment = parser.getint(section, 'train_increment')
+
+                self._future_day = parser.getint(section, 'future_day')
+
+                self._symbol_file = parser.get(section, 'symbol_file')
+
+                self._cv_factor = parser.getint(section, 'cv_factor')
+
+                self._result_file = parser.get(section, 'result_file')
+            except cp.NoSectionError as nose:
+                raise ValueError("No section:{}".format(nose.message))
+            except cp.NoOptionError as noop:
+                raise ValueError('No option:{}'.format(noop.message))
+
+            try:
+                self._max_stocks = parser.getint(section, 'max_stocks')
+            except cp.NoOptionError:
+                # set default value
+                self._max_stocks = None
+
+    @property
+    def calendar_file(self):
+        return self._calendar_file
+
+    @property
+    def reference_dates(self):
+        return self._reference_dates
+
+    @property
+    def test_dates(self):
+        return self._test_dates
+
+    @property
+    def train_days(self):
+        return self._train_days
+
+    @property
+    def train_increment(self):
+        return self._train_increment
+
+    @property
+    def future_day(self):
+        return self._future_day
+
+    @property
+    def symbol_file(self):
+        return self._symbol_file
+
+    @property
+    def cv_factor(self):
+        return self._cv_factor
+
+    @property
+    def max_stocks(self):
+        return self._max_stocks
+
+    @property
+    def result_file(self):
+        return self._result_file
+
+def argument_reader(arg_file):
+    '''
+    Read an argument file for mkmropt
+    Input:
+        arg_file : file name of argument file.
+                   .ini (Windows configuration format) is supported.
+    Return:
+        Argument object. The object has attributes below:
+            calendar_file
+            reference_dates
+            test_dates,
+            train_days,
+            train_increment
+            future_day
+            symbol_file
+            cv_factor
+            max_stocks
+            result_file
+    Exceptions:
+        IOError    : Failed to open the argument file
+        ValueError : Argument value is not specified
+    '''
+    return ini_reader(arg_file)
 
 if __name__ == '__main__':
     print "not implemented yet"

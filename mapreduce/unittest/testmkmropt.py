@@ -17,12 +17,8 @@ import mkmropt as target
 
 
 class TestPreprocess(unittest.TestCase):
-    ''')
-
-    def testExtractDates(self):
-        expected = [ dt.date(2015, 1, 2)
-
-    Unit tests
+    '''
+    Unit tests for mkmropt.py
     '''
 
     @classmethod
@@ -41,6 +37,9 @@ class TestPreprocess(unittest.TestCase):
         cls.expected_option = os.path.join(cls.data_dir,
                 'expected_option.txt')
         cls.fn_opt = os.path.join(cls.data_dir, 'result.csv')
+        cls.fn_args = os.path.join(cls.data_dir, 'mkmropt.ini')
+        cls.fn_nocal = os.path.join(cls.data_dir, 'nocal.ini')
+        cls.fn_nosec = os.path.join(cls.data_dir, 'nosec.ini')
 
     @classmethod
     def tearDownClass(cls):
@@ -309,3 +308,47 @@ class TestPreprocess(unittest.TestCase):
                 fn_sym, cv_factor, max_stocks,
                 fn_opt)
         self.assertTrue(filecmp.cmp(self.expected_option, fn_opt))
+
+    def testReadArgumentIni(self):
+        fn_cal = self.test_mktcal
+        refs = [dt.date(2015, 1, 3), dt.date(2015, 1, 6)]
+        tests = [dt.date(2015, 1, 9), dt.date(2015, 1,11)]
+        days = 8
+        inc = 1
+        future = 10
+        fn_sym = self.test_symbol_file
+        cv_factor = 3
+        max_stocks = None   # take everything
+        fn_opt = self.fn_opt
+
+        args = target.argument_reader(self.fn_args)
+        self.assertEqual(fn_cal, args.calendar_file,
+                'calendar_file:{}'.format(args.calendar_file))
+        self.assertEqual(refs, args.reference_dates,
+                'reference_dates:{}'.format(args.reference_dates))
+        self.assertEqual(tests, args.test_dates,
+                'test_dates:{}'.format(args.test_dates))
+        self.assertEqual(days, args.train_days,
+                'train_days:{}'.format(args.train_days))
+        self.assertEqual(inc, args.train_increment,
+                'train_increment:{}'.format(args.train_increment))
+        self.assertEqual(future, args.future_day,
+                'future_day:{}'.format(args.future_day))
+        self.assertEqual(fn_sym, args.symbol_file,
+                'symbol_file:'.format(args.symbol_file))
+        self.assertEqual(cv_factor, args.cv_factor,
+                'cv_factor:'.format(args.cv_factor))
+        self.assertIsNone(args.max_stocks,
+                'max_stocks:'.format(args.max_stocks))
+        self.assertEqual(fn_opt, args.result_file,
+                'result_file:'.format(args.result_file))
+
+    def testReadArgumentIniException(self):
+        # invalid argument file name
+        self.assertRaises(IOError, target.argument_reader, 'bugus.ini')
+
+        # no calendar_file entry
+        self.assertRaises(ValueError, target.argument_reader, self.fn_nocal)
+
+        # no mkmropt section
+        self.assertRaises(ValueError, target.argument_reader, self.fn_nosec)
