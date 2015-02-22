@@ -29,10 +29,6 @@ class TestPreprocess(unittest.TestCase):
     def setUpClass(cls):
         cls.data_dir = 'data'
         cls.test_symbol_file = os.path.join(cls.data_dir, 'test_symbols.txt')
-        cls.expected_all = os.path.join(cls.data_dir, 'expected_all.csv')
-        cls.result_all = os.path.join(cls.data_dir, 'result_all.csv')
-        cls.expected_two = os.path.join(cls.data_dir, 'expected_two.csv')
-        cls.result_two = os.path.join(cls.data_dir, 'result_two.csv')
         cls.expected_datasets_all = os.path.join(cls.data_dir,
                 'expected_datasets_all.txt')
         cls.expected_datasets_all3 = os.path.join(cls.data_dir,
@@ -46,18 +42,8 @@ class TestPreprocess(unittest.TestCase):
                 'expected_option.txt')
         cls.fn_opt = os.path.join(cls.data_dir, 'result.csv')
 
-        cls.test_bad_symbol_file = os.path.join(cls.data_dir, 'test_symbols_with_bad.txt')
-        cls.expected_bad = os.path.join(cls.data_dir, 'expected_two.csv') # reuse the result
-        cls.result_bad = os.path.join(cls.data_dir, 'result_bad.csv')
-
     @classmethod
     def tearDownClass(cls):
-        if os.path.exists(cls.result_all):
-            os.remove(cls.result_all)
-        if os.path.exists(cls.result_two):
-            os.remove(cls.result_two)
-        if os.path.exists(cls.result_bad):
-            os.remove(cls.result_bad)
         if os.path.exists(cls.fn_opt):
             os.remove(cls.fn_opt)
 
