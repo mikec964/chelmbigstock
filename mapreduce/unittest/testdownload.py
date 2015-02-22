@@ -21,7 +21,8 @@ class TestDownload(unittest.TestCase):
     default_result_file='stock.csv'
 
     def test_read_symbols_all(self):
-        expected = [ 'SYMBOL1', 'SYMBOL2', 'SYMBOL3', 'SYMBOL4' ]
+        expected = [ 'SYMBOL1', 'SYMBOL2', 'SYMBOL3', 'SYMBOL4',
+                'SYMBOL5', 'SYMBOL6', 'SYMBOL7', 'SYMBOL8' ]
         result = target.read_symbols(self.test_symbol_path)
         self.assertEqual(expected, result)
 
