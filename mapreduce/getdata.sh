@@ -7,6 +7,6 @@
 
 SYMBOLS=../chelmbigstock/stock_symbols.txt
 RESULT=input/stock.csv
-MAX=10
+MAX=20
 
 python ./download_data.py -s $SYMBOLS -r $RESULT -m $MAX

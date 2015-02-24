@@ -14,6 +14,7 @@ import datetime as dt
 import bisect as bi
 from collections import defaultdict
 import ConfigParser as cp
+import argparse
 
 
 # data type
@@ -300,4 +301,15 @@ def argument_reader(arg_file):
     return ini_reader(arg_file)
 
 if __name__ == '__main__':
-    print "not implemented yet"
+    parser = argparse.ArgumentParser(
+            description='Make an option file for stock price MapReduce')
+    parser.add_argument('arg_file', metavar='argument_file',
+            help='name of argument file in the .ini format')
+    cmdopt = parser.parse_args()
+
+    args = argument_reader(cmdopt.arg_file)
+    make_option_data(
+        args.calendar_file, args.reference_dates, args.test_dates,
+        args.train_days, args.train_increment, args.future_day,
+        args.symbol_file, args.cv_factor, args.max_stocks,
+        args.result_file)
