@@ -87,12 +87,12 @@ class TestMapper(unittest.TestCase):
                 '2015-01-26':['T0'],
                 '2015-01-27':['T1'] }
         # first, check dates only
-        expected = set(expectedDatesFeatures.keys())
+        expected = set(expectedDateFeatures.keys())
         result = set(target.Dates.keys())
         self.assertEqual(expected, result, 'Dates')
         # next, check each date
-        for key in expectedDates:
-            expected = set(expectedDatesFeatures[key])
+        for key in expected:
+            expected = set(expectedDateFeatures[key])
             result = set(target.Dates[key])
             self.assertEqual(expected, result, 'reference/test')
 
