@@ -30,6 +30,11 @@ def setup_options(fn_opt):
 
 
 def mapper():
+    '''
+    MapReduce implementation of Andy Webber's stock price prediction
+    ELT mapper
+    Given stock symbols, extract adjusted close price
+    '''
     for line in sys.stdin:
         columns = line.strip().split(',')
         symbol = columns[0]
