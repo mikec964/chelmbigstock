@@ -12,10 +12,8 @@ A
 APD            
 AKAM           
 AA             
-AYE            
 ATI            
 AGN            
-AW             
 ALL            
 ALTR           
 MO             
@@ -26,7 +24,6 @@ ACAS
 AEP            
 AXP            
 AIG            
-ASD            
 AMT            
 AMP            
 ABC            
@@ -34,12 +31,10 @@ AMGN
 APC            
 ADI            
 BUD            
-AOC            
 APA            
 AIV            
 APOL           
 AAPL           
-ABI            
 AMAT           
 ADM            
 ASH            
@@ -67,8 +62,6 @@ BMS
 BBY            
 BIG            
 BIIB           
-BJS            
-BDK            
 HRB            
 BMC            
 BA             
@@ -78,7 +71,6 @@ BMY
 BRCM           
 BF.B           
 BC             
-BNI            
 CHRW           
 CA             
 CPB            
@@ -100,7 +92,6 @@ CIEN
 CI             
 CINF           
 CTAS           
-CC             
 CSCO           
 CIT            
 C              
@@ -125,7 +116,6 @@ COP
 CNX            
 ED             
 STZ            
-CEG            
 CVG            
 CBE            
 GLW            
@@ -151,22 +141,17 @@ D
 RRD            
 DOV            
 DOW            
-DJ             
 DTE            
 DD             
 DUK            
 DYN            
 ETFC           
 EMN            
-EK             
 ETN            
 EBAY           
 ECL            
 EIX            
-EP             
-ERTS           
 EDS            
-EQ             
 EMC            
 EMR            
 ESV            
@@ -206,7 +191,6 @@ GM
 GGP            
 GPC            
 GNW            
-GENZ           
 GILD           
 GS             
 GR             
