@@ -20,6 +20,6 @@ set MR_OUTPUT_DIR=%MAPREDUCE_PATH%\output
 rem the emulator directory
 set EMULATOR_DIR=%GIT_DIR%\pyhdemu
 
-if exist %MR_OUTPUT_DIR% del /s %MR_OUTPUT_DIR%
+if exist %MR_OUTPUT_DIR% rmdir /s %MR_OUTPUT_DIR%
 
 python %EMULATOR_DIR%\hdemu.py -input %MR_INPUT_DIR%\stock.csv -output %MR_OUTPUT_DIR% -mapper %MAPREDUCE_PATH%\mapper.py -reducer %MAPREDUCE_PATH%\reducer.py -files %MR_INPUT_DIR%\options.csv
