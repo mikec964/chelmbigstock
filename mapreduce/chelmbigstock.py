@@ -15,6 +15,7 @@ import argparse
 import numpy as np
 from sklearn import linear_model
 from scipy.stats import anderson
+from matplotlib import pyplot as plt
 
 
 class LearningData(object):
@@ -239,9 +240,39 @@ def execute(training_data, cv_data, test_data):
     diff_mn = np.mean(difference)
     diff_sd = np.std(difference)
 
-    print('A2,test_mean,test_stddev,diff_mean,diff_stddev')
-    print('{},{},{},{},{}'.format(A2, test_mn, test_sd, diff_mn, diff_sd))
-    
+    print("the value for A2 is ", A2)
+    print("The mean and standard deviation of the test data are ",
+            test_mn, test_sd)
+    print("The mean and standard deviation of the difference are ",
+            diff_mn, diff_sd)
+
+    # make plot
+    bin_max = max(max(test_data.y), max(predict_data))
+    bin_min = min(min(test_data.y), min(predict_data))
+
+    fig = plt.figure()
+    ax0 = fig.add_subplot(221)
+    ax1 = fig.add_subplot(222, sharey=ax0)
+    ax2 = fig.add_subplot(212)
+
+    # test data
+    count, bins, ignored = ax0.hist(test_data.y, 30, (bin_min, bin_max), color='r')
+    ax0.set_title('test data')
+    # prediction
+    ax1.hist(predict_data, bins)
+    ax1.set_title('prediction')
+
+    # compare per stock
+    ind = np.arange(len(test_data.y))
+    width = 0.35
+    rects1 = ax2.bar(ind, test_data.y, width, color='r')
+    rects2 = ax2.bar(ind+width, predict_data, width, color='b')
+    ax2.set_title('Comparison per stock')
+
+    # draw the plot
+    plt.tight_layout()
+    plt.show()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Stock analysis')
