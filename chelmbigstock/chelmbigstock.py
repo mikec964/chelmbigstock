@@ -204,7 +204,8 @@ class InitialParameters(object):
     def __init__(self):
         """ The object is defined with default values that can then be changed in main()"""
         
-        self.max_stocks = 100
+        #self.max_stocks = 100
+        self.max_stocks = 50
         """ cv_factor determines what portion of stocks to put in cross validation set and what portion
             to leave in training set. cv_factor = 2 means every other stock goes into cross validation
             set. cv_factor = 3 means every third stock goes into cross validation set """
@@ -214,10 +215,12 @@ class InitialParameters(object):
         self.future_day = 25
         """ The reference dates are the reference dates we are training on"""
         self.reference_dates = []
-        self.reference_dates.append(dateutil.days_since_1900('1980-01-01'))
+        #self.reference_dates.append(dateutil.days_since_1900('1980-01-01'))
+        self.reference_dates.append(dateutil.days_since_1900('2000-01-01'))
         """ test_dates are the dates we are using for testing """
         self.test_dates = []
-        self.test_dates.append(dateutil.days_since_1900('1991-01-01'))
+        #self.test_dates.append(dateutil.days_since_1900('1991-01-01'))
+        self.test_dates.append(dateutil.days_since_1900('2010-01-01'))
         """train_history_days and train_increment set how many historical days we use to
            train and the increment used. Setting train_history_days = 21 and train_increment = 5
            means we are using the values at days days 5, 10, 15 and 20 days before the reference day
@@ -232,7 +235,8 @@ class InitialParameters(object):
 def main(argv):
     
     init_param = InitialParameters()
-    init_param.reference_dates.append(dateutil.days_since_1900('1981-01-01'))
+    #init_param.reference_dates.append(dateutil.days_since_1900('1981-01-01'))
+    init_param.reference_dates.append(dateutil.days_since_1900('2001-01-01'))
     execute(init_param)
 
 

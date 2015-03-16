@@ -11,6 +11,7 @@ Mar 1, 2015
 
 from __future__ import print_function
 
+import sys
 import argparse
 import numpy as np
 from sklearn import linear_model
@@ -35,7 +36,9 @@ class LearningData(object):
     def _add_row(self, row_data):
         if len(self._X) != 0:
             if len(self._X[0]) != len(row_data) - 1:
-                raise ValueError('Number of features mismatch')
+                # raise ValueError('Number of features mismatch')
+                print('Number of features mismatch', file=sys.stderr)
+                return
         self._X.append(row_data[:-1])
         self._y.append(row_data[-1])
 
