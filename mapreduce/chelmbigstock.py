@@ -260,7 +260,7 @@ def execute(training_data, cv_data, test_data):
 
     # test data
     count, bins, ignored = ax0.hist(test_data.y, 30, (bin_min, bin_max), color='r')
-    ax0.set_title('test data')
+    ax0.set_title('actual')
     # prediction
     ax1.hist(predict_data, bins)
     ax1.set_title('prediction')
