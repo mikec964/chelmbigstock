@@ -16,6 +16,7 @@ import argparse
 import numpy as np
 from sklearn import linear_model
 from scipy.stats import anderson
+from scipy.stats import pearsonr
 from matplotlib import pyplot as plt
 
 
@@ -250,27 +251,27 @@ def execute(training_data, cv_data, test_data):
             diff_mn, diff_sd)
 
     # make plot
-    bin_max = max(max(test_data.y), max(predict_data))
-    bin_min = min(min(test_data.y), min(predict_data))
-
-    fig = plt.figure()
-    ax0 = fig.add_subplot(221)
-    ax1 = fig.add_subplot(222, sharey=ax0)
-    ax2 = fig.add_subplot(212)
-
-    # test data
-    count, bins, ignored = ax0.hist(test_data.y, 30, (bin_min, bin_max), color='r')
-    ax0.set_title('actual')
-    # prediction
-    ax1.hist(predict_data, bins)
-    ax1.set_title('prediction')
+    # correlation coefficent between prediction and actual data
+    coef, dummy = pearsonr(predict_data, test_data.y)
 
     # compare per stock
-    ind = np.arange(len(test_data.y))
-    width = 0.35
-    rects1 = ax2.bar(ind, test_data.y, width, color='r')
-    rects2 = ax2.bar(ind+width, predict_data, width, color='b')
-    ax2.set_title('Comparison per stock')
+    plt.plot(predict_data, test_data.y, 'ro')
+    plt.title('Comparison per stock')
+    plt.xlabel('Prediction')
+    plt.ylabel('Actual')
+
+    xmin, xmax, ymin, ymax = plt.axis()
+    plt.text(xmin + (xmax - xmin) / 20.0, ymax - (ymax - ymin) / 20.0,
+            'cor coef: {}'.format(coef),
+            verticalalignment='top')
+
+    # draw a line of perfect prediction
+    if ymin > xmin:
+        xmin = ymin
+    if ymax < xmax:
+        xmax = ymax
+    xs = np.linspace(xmin, xmax)
+    plt.plot(xs, xs, 'g--')
 
     # draw the plot
     plt.tight_layout()
