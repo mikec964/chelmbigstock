@@ -27,6 +27,7 @@ def download_stocks(symbols, from_date = None, to_date = None, f_result = 'stock
         to_date   : date string in ISO format. If None, uses today's.
                     Default is None.
         f_result  : file name where the stock data is stored
+                    or file-like object
                     Default is 'stock.csv'
     Return:
         None
@@ -51,7 +52,10 @@ def download_stocks(symbols, from_date = None, to_date = None, f_result = 'stock
 
     url_last = ''.join(url_list)
 
-    with open(f_result, 'w') as dst:
+    if isinstance(f_result, basestring):
+        f_result = FileWrapper(f_result)
+
+    with f_result.open() as dst:
         for symbol in symbols:
             url = url_header.format(sym = symbol) + url_last
             print 'Downloading {} ...'.format(symbol)
@@ -93,6 +97,17 @@ def read_symbols(file_name, max_symbols = None):
                 cnt += 1
             symbols.append( line.strip() )
     return symbols
+
+
+class FileWrapper(object):
+    '''
+    File object wrapper for writing
+    '''
+    def __init__(self, filename):
+        self._fn = filename
+
+    def open(self):
+        return open(self._fn, 'w')
 
 
 if __name__ == '__main__':

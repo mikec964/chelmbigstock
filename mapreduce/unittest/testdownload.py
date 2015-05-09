@@ -121,6 +121,17 @@ class TestDownload(unittest.TestCase):
 
         os.remove(file_name)
 
+    def test_file_wrapper(self):
+        temp_file = os.path.join('data', 'deleteme.txt')
+        result_file = os.path.join('data', 'filewrap.txt')
+        w = target.FileWrapper(temp_file)
+        try:
+            with w.open() as fh:
+                fh.write('This is a test file for the FileWrapper class.')
+            self.assertTrue(filecmp.cmp(result_file, temp_file))
+        finally:
+            os.remove(temp_file)
+
 
 if __name__ == '__main__':
     unittest.main()
