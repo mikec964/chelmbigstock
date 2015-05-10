@@ -7,6 +7,7 @@ Created on Feb 7, 2015
 
 import os
 import sys
+import shutil
 import filecmp
 import unittest
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..'))
@@ -122,16 +123,76 @@ class TestDownload(unittest.TestCase):
         os.remove(file_name)
 
     def test_file_wrapper(self):
-        result_file = os.path.join('data', 'filewrap.txt')
-        with open(result_file) as fh_src:
+        '''
+        Make sure FileWrapper create a new file
+        '''
+        # read the content to be written from the expected result file
+        expected_file = os.path.join('data', 'filewrap.txt')
+        with open(expected_file, 'r') as fh_src:
             org_data = fh_src.read()
 
+        # target file that FileWrapper is going to write
         temp_file = os.path.join('data', 'deleteme.txt')
         w = target.FileWrapper(temp_file)
         try:
             with w.open() as fh:
                 fh.write(org_data)
-            self.assertTrue(filecmp.cmp(result_file, temp_file))
+            self.assertTrue(filecmp.cmp(expected_file, temp_file))
+        finally:
+            os.remove(temp_file)
+
+    def test_file_overwrite(self):
+        '''
+        Make sure FileWrapper overwrites an existing file
+        '''
+        # read the content to be written from the expected result
+        expected_file = os.path.join('data', 'filewrap.txt')
+        with open(expected_file, 'r') as fh_src:
+            org_data = fh_src.read()
+
+        # make the target file
+        dummy_file = os.path.join('data', 'fileappend.txt')
+        temp_file = os.path.join('data', 'deleteme.txt')
+        shutil.copyfile(dummy_file, temp_file)
+
+        # make sure the current content is different from the expected result
+        self.assertFalse(filecmp.cmp(expected_file, temp_file))
+
+        # FileWrapper overwrites the target file
+        w = target.FileWrapper(temp_file)
+        try:
+            with w.open() as fh:
+                fh.write(org_data)
+            self.assertTrue(filecmp.cmp(expected_file, temp_file))
+        finally:
+            os.remove(temp_file)
+
+    def test_file_append(self):
+        '''
+        Make sure FileWrapper appends new content to an existing file
+        with the append option True
+        '''
+        # the source content before appending
+        org_file = os.path.join('data', 'filewrap.txt')
+
+        # copy the source content to the target
+        temp_file = os.path.join('data', 'deleteme.txt')
+        shutil.copyfile(org_file, temp_file)
+
+        # the expected result
+        expected_file = os.path.join('data', 'filewrapaped.txt')
+
+        # the content to be appended
+        apsrc_file = os.path.join('data', 'fileappend.txt')
+        with open(apsrc_file, 'r') as fh:
+            app_data = fh.read()
+
+        # FileWrapper appends the content to the target
+        w = target.FileWrapper(temp_file, True)
+        try:
+            with w.open() as fh:
+                fh.write(app_data)
+            self.assertTrue(filecmp.cmp(expected_file, temp_file))
         finally:
             os.remove(temp_file)
 

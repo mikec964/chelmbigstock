@@ -103,11 +103,12 @@ class FileWrapper(object):
     '''
     File object wrapper for writing
     '''
-    def __init__(self, filename):
+    def __init__(self, filename, append=False):
         self._fn = filename
+        self._mode = 'a+' if append else 'w'
 
     def open(self):
-        return open(self._fn, 'w')
+        return open(self._fn, self._mode)
 
 
 if __name__ == '__main__':
