@@ -122,6 +122,54 @@ class TestDownload(unittest.TestCase):
 
         os.remove(file_name)
 
+    def test_download_append(self):
+        '''
+        Make sure downloaded data is appended to the existing one
+        '''
+        # make a target file
+        target_fn = 'deleteme.txt'
+        base_file = os.path.join('data', 'filewrap.txt')
+        target_file = os.path.join('data', target_fn)
+        shutil.copyfile(base_file, target_file)
+
+        symbol = ['YHOO']
+        from_date = '2014-01-06'
+        to_date = '2014-02-04'
+        try:
+            target.download_stocks(symbol, from_date, to_date, target_file, True)
+
+            with open(target_file, 'r') as fh_target:
+                # make sure the original part is intace
+                with open(base_file, 'r') as fh_org:
+                    for line_org in fh_org:
+                        line = fh_target.readline()
+                        self.assertEqual(line_org, line,
+                            'original={}, target={}'.format(line_org, line))
+
+                # make sure the data is appended
+                # the first line is a header
+                line = fh_target.readline()
+
+                # this should be the actual stock data
+                line = fh_target.readline()
+                columns = line.split(',')
+                self.assertEqual(symbol[0], columns[0].strip(),
+                    'Symbol should be {} but is {}'.format(symbol[0], columns[0]))
+
+                # make sure to_date is correct
+                self.assertEqual(to_date, columns[1].strip(),
+                    'to_date should be {} but is {}'.format(to_date, columns[1]))
+
+                # make sure from_date is correct
+                for line in fh_target:
+                    pass # read it to last
+                columns = line.split(',')
+                self.assertEqual(from_date, columns[1].strip(),
+                    'from_date should be {} but is {}'.format(from_date, columns[1]))
+        finally:
+            os.remove(target_file)
+
+
     def test_file_wrapper(self):
         '''
         Make sure FileWrapper create a new file

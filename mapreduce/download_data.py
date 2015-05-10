@@ -17,7 +17,8 @@ url_to='&d={m}&e={d}&f={y}&g=d'
 url_trailer='&ignore=.csv'
 iso_date_fmt = '%Y-%m-%d'
 
-def download_stocks(symbols, from_date = None, to_date = None, f_result = 'stock.csv'):
+def download_stocks(symbols, from_date = None, to_date = None,
+        f_result = 'stock.csv', append = False):
     '''
     Download stock quotes from Yahoo finance web page and stores as a file
     Input:
@@ -29,6 +30,7 @@ def download_stocks(symbols, from_date = None, to_date = None, f_result = 'stock
         f_result  : file name where the stock data is stored
                     or file-like object
                     Default is 'stock.csv'
+        append    : if True, append data to f_result. Default is False.
     Return:
         None
     Exceptions:
@@ -53,7 +55,7 @@ def download_stocks(symbols, from_date = None, to_date = None, f_result = 'stock
     url_last = ''.join(url_list)
 
     if isinstance(f_result, basestring):
-        f_result = FileWrapper(f_result)
+        f_result = FileWrapper(f_result, append)
 
     with f_result.open() as dst:
         for symbol in symbols:
@@ -123,6 +125,8 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--result_file', default='stock.csv',
             metavar='result_file_name', dest='f_result',
             help='A csv file name where the downloaded data is stored. Default:stock.csv')
+    parser.add_argument('-a', '--append', action='store_true', dest='append',
+            help='if set, downloaded data is appended to the existing result file')
     parser.add_argument('-f', '--from_date', default=None,
             metavar='from_date', dest='from_date',
             help='The first date of stock data. Default:Oldest possible')
@@ -134,4 +138,4 @@ if __name__ == '__main__':
 
     symbols = read_symbols(opt.symbol_file_name, opt.max)
     download_stocks(symbols, from_date=opt.from_date, to_date=opt.to_date,
-            f_result=opt.f_result)
+            f_result=opt.f_result, append=opt.append)
