@@ -1,0 +1,4 @@
+This is the first line of hdfssrc.
+This is the second line of hdfssrc.
+This is the first line of hdfsapp.
+This is the second line of hdfsapp.
