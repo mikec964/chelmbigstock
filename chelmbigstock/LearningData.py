@@ -8,7 +8,7 @@ Created: March 1, 2014
 import sys
 
 from Stock import Stock
-import dateutil
+import dateutl
 
 class LearningData(object):
     """ The  object of data. This object will be composed
@@ -71,10 +71,10 @@ class LearningData(object):
             # Before we add a stock we must makes sure the dates go back far enough
             # i_day is the index of the reference date. We need all this plus the
             # maximum of the history being used in order to use this stock
-            i_day = dateutil.find_ref_date_idx(stocks[i], reference_date)
+            i_day = dateutl.find_ref_date_idx(stocks[i], reference_date)
             elements = len(stocks[i].dates) # This is the number of entries in stocks
             first_day_avail = stocks[i].dates[elements-1]
-            i_day_first_avail = dateutil.find_ref_date_idx(stocks[i], first_day_avail)
+            i_day_first_avail = dateutl.find_ref_date_idx(stocks[i], first_day_avail)
             if (i_day + max(dates[1]) < i_day_first_avail) and (i_day != -1): 
                 self.m += 1
                 stock_days = []

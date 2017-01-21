@@ -8,7 +8,7 @@ Created: March 1, 2014
 import os
 import csv
 
-import dateutil
+import dateutl
 
 
 class Stock(object):
@@ -60,7 +60,7 @@ class Stock(object):
             values = []
             for row in reader:
                 try:
-                    date = dateutil.days_since_1900(row[0])
+                    date = dateutl.days_since_1900(row[0])
                     # Data in the csv files are in reverse cronological order,
                     # insert is used rather than append to put them into cronological
                     dates.append(date) 

@@ -15,7 +15,7 @@ import numpy as np
 from sklearn import linear_model
 from scipy.stats import anderson
 
-import dateutil
+import dateutl
 from Stock import Stock
 from LearningData import LearningData
 
@@ -59,7 +59,7 @@ def form_data(init_param):
         else:
             test_data.append(stocks,[date, day_history, init_param.future_day])
     
-    #reference_date = dateutil.days_since_1900('1991-01-01')
+    #reference_date = dateutl.days_since_1900('1991-01-01')
     #test_data.construct(stocks,[reference_date, day_history, init_param.future_day])
     
     return training_data, cv_data, test_data
@@ -215,12 +215,12 @@ class InitialParameters(object):
         self.future_day = 25
         """ The reference dates are the reference dates we are training on"""
         self.reference_dates = []
-        #self.reference_dates.append(dateutil.days_since_1900('1980-01-01'))
-        self.reference_dates.append(dateutil.days_since_1900('2000-01-01'))
+        #self.reference_dates.append(dateutl.days_since_1900('1980-01-01'))
+        self.reference_dates.append(dateutl.days_since_1900('2000-01-01'))
         """ test_dates are the dates we are using for testing """
         self.test_dates = []
-        #self.test_dates.append(dateutil.days_since_1900('1991-01-01'))
-        self.test_dates.append(dateutil.days_since_1900('2010-01-01'))
+        #self.test_dates.append(dateutl.days_since_1900('1991-01-01'))
+        self.test_dates.append(dateutl.days_since_1900('2010-01-01'))
         """train_history_days and train_increment set how many historical days we use to
            train and the increment used. Setting train_history_days = 21 and train_increment = 5
            means we are using the values at days days 5, 10, 15 and 20 days before the reference day
@@ -235,8 +235,8 @@ class InitialParameters(object):
 def main(argv):
     
     init_param = InitialParameters()
-    #init_param.reference_dates.append(dateutil.days_since_1900('1981-01-01'))
-    init_param.reference_dates.append(dateutil.days_since_1900('2001-01-01'))
+    #init_param.reference_dates.append(dateutl.days_since_1900('1981-01-01'))
+    init_param.reference_dates.append(dateutl.days_since_1900('2001-01-01'))
     execute(init_param)
 
 
