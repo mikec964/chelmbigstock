@@ -95,7 +95,12 @@ class LearningData(object):
                     temp_values.append(adjusted_value)
                 self.X.append(temp_values)
                 # Now get the future value and append it to self.y
+                # For classification problem assign a one to stock that has gone
+                # up and 0 to stock that has gone down
                 future_day = i_day - dates[2]
                 adjusted_value = stocks[i].values[future_day]/reference_value
-                self.y.append(adjusted_value)
+                if adjusted_value >= 1:
+                    self.y.append(1)
+                else:
+                    self.y.append(0)
                                    

@@ -23,16 +23,6 @@ def form_data(init_param):
     """ This function constructs the training, testing and cross validation
         objects for the stock market analysis """
     stocks = Stock.read_stocks('../data/stocks_read.txt', init_param.max_stocks)
-    stocks_train = []
-    stocks_cv = []
-    stocks_test = []
-    count = 0
-    for stock in stocks:
-        if count % init_param.cv_factor == 0:
-            stocks_train.append(stock)
-        else:
-            stocks_cv.append(stock)
-        count = count + 1
     
     day_history = []
     for i in range(init_param.train_increment, init_param.train_days, init_param.train_increment):
@@ -43,12 +33,9 @@ def form_data(init_param):
             training_data
         except NameError:
             training_data = LearningData()
-            training_data.construct(stocks_train,[date, day_history, init_param.future_day])
-            cv_data = LearningData()
-            cv_data.construct(stocks_cv,[date, day_history, init_param.future_day])
+            training_data.construct(stocks,[date, day_history, init_param.future_day])
         else:
-            training_data.append(stocks_train,[date, day_history, init_param.future_day])
-            cv_data.append(stocks_cv,[date, day_history, init_param.future_day])
+            training_data.append(stocks,[date, day_history, init_param.future_day])
             
     for date in init_param.test_dates:
         try:
@@ -62,7 +49,7 @@ def form_data(init_param):
     #reference_date = dateutl.days_since_1900('1991-01-01')
     #test_data.construct(stocks,[reference_date, day_history, init_param.future_day])
     
-    return training_data, cv_data, test_data
+    return training_data, test_data
 
 def output(training_data, cv_data):
     " This function outputs the data in csv form so it can be examined in Matlab"
@@ -91,7 +78,7 @@ def output(training_data, cv_data):
     f.write(y_str)
     f.close
     
-def learn(training_data, cv_data):
+def logistic_reg(training_data):
     """ This function does the actual training. It takes in training data
         and cross validation data and returns the model and optimal 
         regularization parameter """
@@ -100,23 +87,24 @@ def learn(training_data, cv_data):
         find the value of parameter that minimizes error on cross validation data. If
         local minimum is found the return this model. If not, extend minimum or maximum 
         appropriately and repeat """
-    alpha_min = 0.01
-    alpha_max = 0.2
+    from sklearn.linear_model import LogisticRegression
+    C_min = 1.0e-5
+    C_max = 1.0e5
     regularization_flag = 1 # To set 1 until local minimum is found
     regularization_param = 0
     
-    while regularization_flag != 0:
-        regularization_param, regularization_flag = set_reg_param(training_data, cv_data, alpha_min, alpha_max)
-        if regularization_flag == -1:
-            """ The local minimum is at point less than alpha_min """
-            alpha_min = alpha_min * 0.3
-        if regularization_flag == 1:
-            """ The local minimum is at point greater then alpha_max """
-            alpha_max = alpha_max * 3
+#    while regularization_flag != 0:
+#        regularization_param, regularization_flag = set_reg_param(training_data, cv_data, alpha_min, alpha_max)
+#        if regularization_flag == -1:
+#            """ The local minimum is at point less than alpha_min """
+#            alpha_min = alpha_min * 0.3
+#        if regularization_flag == 1:
+#            """ The local minimum is at point greater then alpha_max """
+#            alpha_max = alpha_max * 3
             
-    clf = linear_model.Ridge (alpha=regularization_param, fit_intercept=False)
-    clf.fit(training_data.X, training_data.y)
-    return clf, regularization_param
+    lr = LogisticRegression (C=C_max, random_state=0)
+    lr.fit(training_data.X, training_data.y)
+    return lr, C_max
 
 def set_reg_param(training_data, cv_data, alpha_min, alpha_max):
     """ This function does a linear regression with regularization for training_data
@@ -172,28 +160,14 @@ def set_reg_param(training_data, cv_data, alpha_min, alpha_max):
 def execute(init_param): 
     """ execute is the function where each run is done. main sets parameters then calls execute"""
     
-    training_data, cv_data, test_data = form_data(init_param)
+    training_data, test_data = form_data(init_param)
     
     if init_param.output:
         output(training_data, cv_data)
     
-    clf, regularization_parameter = learn(training_data, cv_data)
+    #clf, regularization_parameter = learn(training_data, cv_data)
+    lr, C = logistic_reg(training_data)
     
-    
-    """ do an Anderson Darling test on the data to determine if it is a normal fit"""
-    A2, sig, crit = anderson(test_data.y, dist = 'norm')
-    print("the value for A2 is ", A2)
-    
-    mn = np.mean(test_data.y)
-    sd = np.std(test_data.y)
-    print("The mean and standard deviation of the test data are ", mn, sd)
-    
-    
-    predict_data = clf.predict(test_data.X)
-    difference = predict_data - test_data.y
-    mn = np.mean(difference)
-    sd = np.std(difference)
-    print("The mean and standard deviation of the difference are ", mn, sd)
     
     print("run finished")
     
