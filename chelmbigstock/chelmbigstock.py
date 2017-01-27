@@ -13,6 +13,7 @@ from operator import itemgetter
 
 import numpy as np
 from sklearn import linear_model
+import timeit
 from scipy.stats import anderson
 
 import dateutl
@@ -160,16 +161,59 @@ def set_reg_param(training_data, cv_data, alpha_min, alpha_max):
 def execute(init_param): 
     """ execute is the function where each run is done. main sets parameters then calls execute"""
     
+    from sklearn.linear_model import LogisticRegression
+    import matplotlib.pyplot as plt
+    start = timeit.timeit()
     training_data, test_data = form_data(init_param)
+    end1 = timeit.timeit()
+    print("form_data took ", (end1-start))
+    print("training_data has ",len(training_data.y)," elements")
+    print("test_data has ",len(test_data.y)," elements")
     
     if init_param.output:
         output(training_data, cv_data)
     
     #clf, regularization_parameter = learn(training_data, cv_data)
     lr, C = logistic_reg(training_data)
+    test_predict = lr.predict(test_data.X)
+    errors = np.count_nonzero(test_predict - test_data.y)
+    accuracy = 1.0 - (errors/len(test_predict))
+    print("accuracy is ",accuracy)
+    end2 = timeit.timeit()
+    print("regression took ",(end2-end1))
+    train_errors, test_errors, C_arr = [], [], []
+    train_accuracy, test_accuracy = [],[]
+    C_i = 0.01
+    while C_i < 10:
+        lr = LogisticRegression (C=C_i, random_state=0, class_weight='balanced')
+        lr.fit(training_data.X, training_data.y)
+        train_errors.append(np.count_nonzero(lr.predict(training_data.X)-training_data.y))
+        accuracy = 1.0 - np.count_nonzero(lr.predict(training_data.X)-training_data.y)/len(training_data.y)
+        train_accuracy.append(accuracy)
+        test_errors.append(np.count_nonzero(lr.predict(test_data.X)-test_data.y))
+        accuracy = 1.0 - np.count_nonzero(lr.predict(test_data.X)-test_data.y)/len(test_data.y)
+        test_accuracy.append(accuracy)
+        C_arr.append(C_i)
+        C_i = C_i *1.1
+        
+    plt.plot(C_arr, train_accuracy)
+    plt.plot(C_arr, test_accuracy)
+    plt.xscale('log')
+    plt.show()
+        
+        
     
+#    init_param2 = init_param
+#    init_param2.reference_dates = [dateutl.days_since_1900('2000-01-01')]
+#    init_param2.test_dates = [dateutl.days_since_1900('2010-01-01')]
+#    training_data2, test_data2 = form_data(init_param2)
+#    lr, C = logistic_reg(training_data2)
+#    test_predict2 = lr.predict(test_data2.X)
+#    errors = np.count_nonzero(test_predict2 - test_data2.y)
+#    accuracy = 1.0 - (errors/len(test_predict))
+    print("accuracy is ",accuracy)
     
-    print("run finished")
+    print("run finished with accuracy", accuracy)
     
 class InitialParameters(object):
     """ This class defines an object of parameters used to run the code. It
@@ -179,7 +223,7 @@ class InitialParameters(object):
         """ The object is defined with default values that can then be changed in main()"""
         
         #self.max_stocks = 100
-        self.max_stocks = 50
+        self.max_stocks = 200
         """ cv_factor determines what portion of stocks to put in cross validation set and what portion
             to leave in training set. cv_factor = 2 means every other stock goes into cross validation
             set. cv_factor = 3 means every third stock goes into cross validation set """
@@ -190,11 +234,21 @@ class InitialParameters(object):
         """ The reference dates are the reference dates we are training on"""
         self.reference_dates = []
         #self.reference_dates.append(dateutl.days_since_1900('1980-01-01'))
-        self.reference_dates.append(dateutl.days_since_1900('2000-01-01'))
+        self.reference_dates.append(dateutl.days_since_1900('2001-01-01'))
+        self.reference_dates.append(dateutl.days_since_1900('2001-03-01'))
+        self.reference_dates.append(dateutl.days_since_1900('2001-05-01'))
+        self.reference_dates.append(dateutl.days_since_1900('2001-07-01'))
+        self.reference_dates.append(dateutl.days_since_1900('2001-09-01'))
+        self.reference_dates.append(dateutl.days_since_1900('2001-11-01'))
         """ test_dates are the dates we are using for testing """
         self.test_dates = []
         #self.test_dates.append(dateutl.days_since_1900('1991-01-01'))
         self.test_dates.append(dateutl.days_since_1900('2010-01-01'))
+        self.test_dates.append(dateutl.days_since_1900('2010-03-01'))
+        self.test_dates.append(dateutl.days_since_1900('2010-05-01'))
+        self.test_dates.append(dateutl.days_since_1900('2010-07-01'))
+        self.test_dates.append(dateutl.days_since_1900('2010-09-01'))
+        self.test_dates.append(dateutl.days_since_1900('2010-11-01'))
         """train_history_days and train_increment set how many historical days we use to
            train and the increment used. Setting train_history_days = 21 and train_increment = 5
            means we are using the values at days days 5, 10, 15 and 20 days before the reference day
@@ -210,7 +264,7 @@ def main(argv):
     
     init_param = InitialParameters()
     #init_param.reference_dates.append(dateutl.days_since_1900('1981-01-01'))
-    init_param.reference_dates.append(dateutl.days_since_1900('2001-01-01'))
+    #init_param.reference_dates.append(dateutl.days_since_1900('2001-01-01'))
     execute(init_param)
 
 
