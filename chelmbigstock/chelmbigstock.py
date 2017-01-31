@@ -24,28 +24,28 @@ def form_data(init_param):
     """ This function constructs the training, testing and cross validation
         objects for the stock market analysis """
     stocks = Stock.read_stocks('../data/stocks_read.txt', init_param.max_stocks)
+    rs = stocks[1].rsi
+    ts = stocks[1].tsi
+    a = 1
     
-    day_history = []
-    for i in range(init_param.train_increment, init_param.train_days, init_param.train_increment):
-        day_history.append(i)
         
     for date in init_param.reference_dates:
         try:
             training_data
         except NameError:
             training_data = LearningData()
-            training_data.construct(stocks,[date, day_history, init_param.future_day])
+            training_data.construct(stocks, date, init_param.future_day, init_param.features)
         else:
-            training_data.append(stocks,[date, day_history, init_param.future_day])
+            training_data.append(stocks, date, init_param.future_day, init_param.features)
             
     for date in init_param.test_dates:
         try:
             test_data
         except NameError:
             test_data = LearningData()
-            test_data.construct(stocks,[date, day_history, init_param.future_day])
+            test_data.construct(stocks, date, init_param.future_day, init_param.features)
         else:
-            test_data.append(stocks,[date, day_history, init_param.future_day])
+            test_data.append(stocks, date, init_param.future_day, init_param.features)
     
     #reference_date = dateutl.days_since_1900('1991-01-01')
     #test_data.construct(stocks,[reference_date, day_history, init_param.future_day])
@@ -161,7 +161,7 @@ def set_reg_param(training_data, cv_data, alpha_min, alpha_max):
 def execute(init_param): 
     """ execute is the function where each run is done. main sets parameters then calls execute"""
     
-    from sklearn.linear_model import LogisticRegression
+    from sklearn.svm import SVC
     import matplotlib.pyplot as plt
     start = timeit.timeit()
     training_data, test_data = form_data(init_param)
@@ -174,33 +174,42 @@ def execute(init_param):
         output(training_data, cv_data)
     
     #clf, regularization_parameter = learn(training_data, cv_data)
-    lr, C = logistic_reg(training_data)
+    """  lr, C = logistic_reg(training_data)
     test_predict = lr.predict(test_data.X)
     errors = np.count_nonzero(test_predict - test_data.y)
     accuracy = 1.0 - (errors/len(test_predict))
     print("accuracy is ",accuracy)
     end2 = timeit.timeit()
-    print("regression took ",(end2-end1))
+    print("regression took ",(end2-end1))"""
     train_errors, test_errors, C_arr = [], [], []
     train_accuracy, test_accuracy = [],[]
     C_i = 0.01
     while C_i < 10:
-        lr = LogisticRegression (C=C_i, random_state=0, class_weight='balanced')
-        lr.fit(training_data.X, training_data.y)
-        train_errors.append(np.count_nonzero(lr.predict(training_data.X)-training_data.y))
-        accuracy = 1.0 - np.count_nonzero(lr.predict(training_data.X)-training_data.y)/len(training_data.y)
+        svm = SVC(kernel='rbf', random_state=0, gamma = 0.2, C=C_i)
+        svm.fit(training_data.X, training_data.y)
+        train_errors.append(np.count_nonzero(svm.predict(training_data.X)-training_data.y))
+        accuracy = 1.0 - np.count_nonzero(svm.predict(training_data.X)-training_data.y)/len(training_data.y)
         train_accuracy.append(accuracy)
-        test_errors.append(np.count_nonzero(lr.predict(test_data.X)-test_data.y))
-        accuracy = 1.0 - np.count_nonzero(lr.predict(test_data.X)-test_data.y)/len(test_data.y)
+        test_errors.append(np.count_nonzero(svm.predict(test_data.X)-test_data.y))
+        accuracy = 1.0 - np.count_nonzero(svm.predict(test_data.X)-test_data.y)/len(test_data.y)
         test_accuracy.append(accuracy)
         C_arr.append(C_i)
         C_i = C_i *1.1
         
-    plt.plot(C_arr, train_accuracy)
-    plt.plot(C_arr, test_accuracy)
+    plt.plot(C_arr, train_accuracy,c='r')
+    plt.plot(C_arr, test_accuracy,c='b')
     plt.xscale('log')
     plt.show()
-        
+    
+    yy = np.asarray(training_data.y)
+    XX = np.asarray(training_data.X)
+    XX0 = XX[yy == 0]
+    XX1 = XX[yy == 1]
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    ax1.scatter(XX0[:,0], XX0[:,2],c='red')
+    ax1.scatter(XX1[:,0], XX1[:,2],c='blue')
+    plt.show()
         
     
 #    init_param2 = init_param
@@ -235,11 +244,11 @@ class InitialParameters(object):
         self.reference_dates = []
         #self.reference_dates.append(dateutl.days_since_1900('1980-01-01'))
         self.reference_dates.append(dateutl.days_since_1900('2001-01-01'))
-        self.reference_dates.append(dateutl.days_since_1900('2001-03-01'))
+        """self.reference_dates.append(dateutl.days_since_1900('2001-03-01'))
         self.reference_dates.append(dateutl.days_since_1900('2001-05-01'))
         self.reference_dates.append(dateutl.days_since_1900('2001-07-01'))
         self.reference_dates.append(dateutl.days_since_1900('2001-09-01'))
-        self.reference_dates.append(dateutl.days_since_1900('2001-11-01'))
+        self.reference_dates.append(dateutl.days_since_1900('2001-11-01'))"""
         """ test_dates are the dates we are using for testing """
         self.test_dates = []
         #self.test_dates.append(dateutl.days_since_1900('1991-01-01'))
@@ -248,13 +257,14 @@ class InitialParameters(object):
         self.test_dates.append(dateutl.days_since_1900('2010-05-01'))
         self.test_dates.append(dateutl.days_since_1900('2010-07-01'))
         self.test_dates.append(dateutl.days_since_1900('2010-09-01'))
-        self.test_dates.append(dateutl.days_since_1900('2010-11-01'))
+        self.test_dates.append(dateutl.days_since_1900('2010-11-01')) 
         """train_history_days and train_increment set how many historical days we use to
            train and the increment used. Setting train_history_days = 21 and train_increment = 5
            means we are using the values at days days 5, 10, 15 and 20 days before the reference day
            as input features """
         self.train_days = 21
         self.train_increment = 5
+        self.features = ['rsi','tsi','ppo']
         """ output is just a boolean about calling the output function to write out 
             appropriate X and y matricies. The default is False meaning do not write out
             matricies """

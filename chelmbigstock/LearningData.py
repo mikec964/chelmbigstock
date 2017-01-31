@@ -30,7 +30,7 @@ class LearningData(object):
         self.m = 0
         self.n = 0
 
-    def construct(self, stocks, dates):
+    def construct(self, stocks, date, future_day, features):
         """ This method constructs the data arrays. The inputs are an array
             of m stocks and an array of dates. The first element of dates
             is a character string to tell the referenced date such as
@@ -52,53 +52,43 @@ class LearningData(object):
             
         self.X = []
         self.y = []
-        self.n = len(dates[1]) + 1
+        self.n = len(features)
         self.m = 0
-        self.append(stocks, dates)
+        self.append(stocks, date, future_day, features)
         
-    def append(self, stocks, dates):
+    def append(self, stocks, date, future_day, features):
         """ This method appends data to a learningData object
             It is meant to be called from construct
             for a new object or from outside the method to append to an existing
             """
-        if (self.n != len(dates[1]) + 1):
+        if (self.n != len(features)):
             sys.exit("trying to append to wrong size data set")
         
-        reference_date = dates[0]
+ #       reference_date = dates[0]
         num_stocks = len(stocks)
         
         for i in range(0, num_stocks):
             # Before we add a stock we must makes sure the dates go back far enough
             # i_day is the index of the reference date. We need all this plus the
             # maximum of the history being used in order to use this stock
-            i_day = dateutl.find_ref_date_idx(stocks[i], reference_date)
+            i_day = dateutl.find_ref_date_idx(stocks[i], date)
             elements = len(stocks[i].dates) # This is the number of entries in stocks
             first_day_avail = stocks[i].dates[elements-1]
             i_day_first_avail = dateutl.find_ref_date_idx(stocks[i], first_day_avail)
-            if (i_day + max(dates[1]) < i_day_first_avail) and (i_day != -1): 
+            if (i_day < i_day_first_avail) and (i_day != -1): 
                 self.m += 1
-                stock_days = []
-                stock_days.append(i_day)
-                # Construct an array of indices of values to construct from
-                for i_mark in range(0, len(dates[1])):
-                    stock_days.append(i_day + dates[1][i_mark])
-                # Now go through array of indices and get the trading values of those days
                 temp_values = []
-                reference_value = stocks[i].values[i_day] # All values for this stock are divided by this
-                if reference_value < 0.001:
-                    print (stocks[i].name, i_day)
-                for i_mark in range(0, len(stock_days)):
-                    # divide stock value by value on reference date 
-                    this_stock = stocks[i]
-                    stock_day = stock_days[i_mark]
-                    adjusted_value = this_stock.values[stock_day]/reference_value
-                    temp_values.append(adjusted_value)
+                if 'rsi' in features:
+                    temp_values.append(stocks[i].rsi[i_day])
+                if 'tsi' in features:
+                    temp_values.append(stocks[i].tsi[i_day])
+                if 'ppo' in features:
+                    temp_values.append(stocks[i].ppo[i_day])
                 self.X.append(temp_values)
                 # Now get the future value and append it to self.y
                 # For classification problem assign a one to stock that has gone
                 # up and 0 to stock that has gone down
-                future_day = i_day - dates[2]
-                adjusted_value = stocks[i].values[future_day]/reference_value
+                adjusted_value = stocks[i].values[i_day - future_day]/stocks[i].values[i_day]
                 if adjusted_value >= 1:
                     self.y.append(1)
                 else:
