@@ -207,8 +207,8 @@ def execute(init_param):
     XX1 = XX[yy == 1]
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
-    ax1.scatter(XX0[:,0], XX0[:,2],c='red')
-    ax1.scatter(XX1[:,0], XX1[:,2],c='blue')
+    ax1.scatter(XX0[:,0], XX0[:,7],c='red')
+    ax1.scatter(XX1[:,0], XX1[:,7],c='blue')
     plt.show()
         
     
@@ -264,7 +264,8 @@ class InitialParameters(object):
            as input features """
         self.train_days = 21
         self.train_increment = 5
-        self.features = ['rsi','tsi','ppo']
+        self.features = ['rsi','tsi','ppo','adx','dip14','dim14','cci', \
+                         'cmo']
         """ output is just a boolean about calling the output function to write out 
             appropriate X and y matricies. The default is False meaning do not write out
             matricies """

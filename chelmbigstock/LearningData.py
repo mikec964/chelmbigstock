@@ -84,11 +84,22 @@ class LearningData(object):
                     temp_values.append(stocks[i].tsi[i_day])
                 if 'ppo' in features:
                     temp_values.append(stocks[i].ppo[i_day])
+                if 'adx' in features:
+                    temp_values.append(stocks[i].adx[i_day])
+                if 'dip14' in features:
+                    temp_values.append(stocks[i].adx[i_day])
+                if 'dim14' in features:
+                    temp_values.append(stocks[i].adx[i_day])
+                if 'cci' in features:
+                    temp_values.append(stocks[i].cci[i_day])
+                if 'cmo' in features:
+                    temp_values.append(stocks[i].cmo[i_day])
                 self.X.append(temp_values)
                 # Now get the future value and append it to self.y
                 # For classification problem assign a one to stock that has gone
                 # up and 0 to stock that has gone down
-                adjusted_value = stocks[i].values[i_day - future_day]/stocks[i].values[i_day]
+                adjusted_value = stocks[i].close[i_day - future_day]/ \
+                    stocks[i].close[i_day]
                 if adjusted_value >= 1:
                     self.y.append(1)
                 else:

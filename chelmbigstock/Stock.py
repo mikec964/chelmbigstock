@@ -25,10 +25,19 @@ class Stock(object):
         self.directory = directory
         self.length = 0
         self.dates = []
-        self.values = []
+        self.vopen = [] # opening value. cannot use "open"
+        self.high = []
+        self.low = []
+        self.close = []
+        self.volume = []
         self.rsi = []
         self.tsi = []
         self.ppo = []
+        self.dip14 = []
+        self.dim14 = []
+        self.adx = []
+        self.cci = []
+        self.cmo = []
         
     @staticmethod
     def ema(a, N):
@@ -50,6 +59,26 @@ class Stock(object):
             a_ema[iday] = a[iday]*alpha + a_ema[iday+1]*(1.0-alpha)
         return a_ema
         
+    def sma(a, N):
+        """ This method calculates the simple moving average of an 
+        array, a and period N. Because stock values are in reverse
+        chronological order the input and outputs will also be in
+        reverse chronological order. """
+        
+        """ Go through the original N days to initialize ave_a"""
+        lengtha = len(a)
+        a_sma = np.zeros(lengtha)
+        a_sum = 0.0
+        for iday in range(lengtha-1, lengtha-(N+1),-1):
+            a_sum += a[iday]
+            a_sma[iday] = a_sum/(lengtha - iday)
+        
+        for iday in range(lengtha-(N+1),-1,-1):
+            a_sum += a[iday]
+            a_sum -= a[iday+N]
+            a_sma[iday] = a_sum/N
+        return a_sma
+        
     @classmethod
     def read_stocks(cls, stock_file, max_stocks):
         """ This method takes in a file of the stock symbols to be read and 
@@ -65,6 +94,9 @@ class Stock(object):
             this_stock.rsi_calc()
             this_stock.tsi_calc()
             this_stock.ppo_calc()
+            this_stock.adx_calc()
+            this_stock.cci_calc()
+            this_stock.cmo_calc()
             stocks.append(this_stock)
             count = count + 1
             if count >= max_stocks:
@@ -84,17 +116,26 @@ class Stock(object):
             reader = csv.reader(f)
             headers = f.readline()
             dates = []
-            values = []
+            vopen = []
+            high = []
+            low = []
+            close = []
+            volume = []
             for row in reader:
                 try:
                     date = dateutl.days_since_1900(row[0])
                     # Data in the csv files are in reverse cronological order,
                     dates.append(date) 
-                    values.append(float(row[6]))
+                    vopen.append(float(row[1]))
+                    high.append(float(row[2]))
+                    low.append(float(row[3]))
+                    close.append(float(row[4]))
+                    volume.append(float(row[5]))
                 except:
                     continue
              #       print("empty row")
-        self.dates, self.values = dates, values
+        self.dates, self.vopen, self.high, self.low, self.close,self.volume = \
+            dates, vopen, high, low, close, volume
     def rsi_calc(self):
         """ This method calculates the relative strength index of the stock.
             Calculations are based on a 14 day period"""
@@ -104,26 +145,26 @@ class Stock(object):
         self.rsi = np.zeros(len(self.dates))
         ave_gain = 0
         ave_loss = 0
-        last_val = self.values[len(self.dates)-1]
+        last_val = self.close[len(self.dates)-1]
         oneO14 = 1/14
         for iday in range(len(self.dates)-2,len(self.dates)-15,-1):
-            gain = self.values[iday] - last_val
+            gain = self.close[iday] - last_val
             if gain > 0:
                 ave_gain += gain
             else:
                 ave_loss -= gain
-            last_val = self.values[iday]
+            last_val = self.close[iday]
             
         """ Now go through rest of data field to assign relative strength """
         for iday in range(len(self.dates)-16, -1, -1):
-            gain = self.values[iday] - last_val
+            gain = self.close[iday] - last_val
             if gain > 0:
                 ave_gain = (ave_gain*13 + gain)*oneO14
                 ave_loss = (ave_loss*13)*oneO14
             else:
                 ave_gain = (ave_gain*13)*oneO14
                 ave_loss = (ave_loss*13 - gain)*oneO14
-            last_val = self.values[iday]
+            last_val = self.close[iday]
             if ave_loss > 0:
                 RS = ave_gain/ave_loss
                 self.rsi[iday] = 100 - 100/(1.0 + RS)
@@ -137,7 +178,7 @@ class Stock(object):
             period of 13 as suggested in wikipedia """
         r = 25
         s = 13
-        vals = self.values
+        vals = self.close
         days = len(vals)
         diff = np.zeros(days-1)
         for iday in range(0,days-2):
@@ -157,13 +198,100 @@ class Stock(object):
             period of 12 as suggested in wikipedia """
         r = 26
         s = 12
-        vals = self.values
+        vals = self.close
         num_array = Stock.ema(vals, s) - Stock.ema(vals, r)
         denom_array = Stock.ema(vals, r)
         """ The ema function sets first elements to zero so division will 
             give nan. Get rid of them with the nan_to_num method """
         self.ppo = np.nan_to_num(num_array/denom_array)
         self.ppo[self.ppo >= 1E300] = 0
+        return
+        
+    def adx_calc(self):
+        """ This method calculates the positive and negative directional 
+            movement indicies and average directional index of the stock.
+            Periods of 14 days are chosen as suggested by Wilder. Note that
+            Wilders periods of 14 corresponds with a ema of 27. Data is in
+            reverse chronological order so iday+1 is earlier day"""
+        """First calculate true range """
+        TR1 = np.array(self.high) - np.array(self.low)
+        TR1 = np.delete(TR1,-1)
+        """initialize directional movement 1 (positive and negative) then calc"""
+        days = len(self.close)
+        DMP1 = np.zeros(days-1)
+        DMM1 = np.zeros(days-1)
+        for iday in range(0, days-2):
+            pls_change = self.high[iday] - self.high[iday+1]
+            mns_change = self.low[iday+1] - self.low[iday]
+            if (pls_change > mns_change and pls_change > 0.0):
+                DMP1[iday] = pls_change
+            elif (pls_change > 0):
+                DMM1[iday] = mns_change
+        
+        """ Do 14 day Wilder EMA on data which corresponds to 27 day EMA """
+        TR14 = Stock.ema(TR1,27)
+        DMP14 = Stock.ema(DMP1,27)
+        DMM14 = Stock.ema(DMM1,27)
+        
+        """ Caclulate the directional indicies """
+        self.dip14 = np.nan_to_num(DMP14/TR14)
+        self.dip14[self.dip14 > 1E300] = 0
+        self.dim14 = np.nan_to_num(DMM14/TR14)
+        self.dim14[self.dim14 > 1E300] = 0
+        
+        """ Calculate ADX """
+        dx = abs(self.dip14 - self.dim14)/(self.dip14 + self.dim14)
+        dx = np.nan_to_num(dx)
+        dx[dx >= 1E300] = 0
+        self.adx = Stock.ema(dx,27)
+        return
+        
+    def cci_calc(self):
+        """ This method calculates the commodity channel index of the stock."""
+            
+        TP = (np.array(self.high)+np.array(self.low)+np.array(self.close))/3.0
+        TPMA = Stock.sma(TP,20)
+        
+        deviation = np.zeros(len(TP))
+        
+        for iday in range(len(TP)-20):
+            dev_sum = 0.0
+            TPMA_iday = TPMA[iday]
+            for i in range(0,20):
+                dev_sum += abs(TP[iday+i] - TPMA_iday)
+            dev_sum = dev_sum/20.0
+            deviation[iday] = dev_sum
+        
+        self.cci = (TP - TPMA)/(0.015 * deviation)
+        self.cci = np.nan_to_num(self.cci)
+        self.cci[self.cci >= 1E300] = 0
+        
+        return
+        
+    def cmo_calc(self):
+        """ This method calculates the chande Momentum Oscillator of the 
+            stock. Using the default span of 9 days"""
+            
+        days = len(self.close)-1
+        up = np.zeros(days)
+        down = np.zeros(days)
+        for iday in range(days):
+            """ price change, data is in reverse chronological order
+                diff is positive for up days and negative for down days"""
+            diff = self.close[iday] - self.close[iday+1]
+            if (diff > 0):
+                up[iday] = diff
+            else:
+                down[iday] = -1.0 * diff
+        su = Stock.sma(up,9)
+        sd = Stock.sma(down,9)
+        
+        
+        
+        self.cmo = (su - sd)/(su + sd)
+        self.cmo = np.nan_to_num(self.cmo)
+        self.cmo[self.cmo >= 1E300] = 0
+        
         return
         
     
