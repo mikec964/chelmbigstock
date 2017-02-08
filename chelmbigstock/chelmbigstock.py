@@ -20,6 +20,12 @@ import dateutl
 from Stock import Stock
 from LearningData import LearningData
 
+"""from sklearn import preprocessing
+
+std_scale = preprocessing.StandardScaler().fit(X_train)
+X_train_std = std_scale.transform(X_train)
+X_test_std = std_scale.transform(X_test) """
+
 def form_data(init_param):
     """ This function constructs the training, testing and cross validation
         objects for the stock market analysis """
@@ -207,8 +213,8 @@ def execute(init_param):
     XX1 = XX[yy == 1]
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
-    ax1.scatter(XX0[:,0], XX0[:,7],c='red')
-    ax1.scatter(XX1[:,0], XX1[:,7],c='blue')
+    ax1.scatter(XX0[:,0], XX0[:,12],c='red')
+    ax1.scatter(XX1[:,0], XX1[:,12],c='blue')
     plt.show()
         
     
@@ -265,7 +271,7 @@ class InitialParameters(object):
         self.train_days = 21
         self.train_increment = 5
         self.features = ['rsi','tsi','ppo','adx','dip14','dim14','cci', \
-                         'cmo']
+                         'cmo','mfi','natr','roc','stoch','uo']
         """ output is just a boolean about calling the output function to write out 
             appropriate X and y matricies. The default is False meaning do not write out
             matricies """

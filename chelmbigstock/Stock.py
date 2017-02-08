@@ -38,6 +38,11 @@ class Stock(object):
         self.adx = []
         self.cci = []
         self.cmo = []
+        self.mfi = []
+        self.natr = []
+        self.roc = []
+        self.stoch = []
+        self.uo = []
         
     @staticmethod
     def ema(a, N):
@@ -97,6 +102,11 @@ class Stock(object):
             this_stock.adx_calc()
             this_stock.cci_calc()
             this_stock.cmo_calc()
+            this_stock.mfi_calc()
+            this_stock.natr_calc()
+            this_stock.roc_calc()
+            this_stock.stoch_calc()
+            this_stock.uo_calc()
             stocks.append(this_stock)
             count = count + 1
             if count >= max_stocks:
@@ -124,12 +134,16 @@ class Stock(object):
             for row in reader:
                 try:
                     date = dateutl.days_since_1900(row[0])
+                    """ adjustment is for splits. Everything must be 
+                        be multiplied by the ration of the adjusted close
+                        to the actual close """
+                    adjustment = float(row[6])/float(row[4])
                     # Data in the csv files are in reverse cronological order,
                     dates.append(date) 
-                    vopen.append(float(row[1]))
-                    high.append(float(row[2]))
-                    low.append(float(row[3]))
-                    close.append(float(row[4]))
+                    vopen.append(float(row[1])*adjustment)
+                    high.append(float(row[2])*adjustment)
+                    low.append(float(row[3])*adjustment)
+                    close.append(float(row[4])*adjustment)
                     volume.append(float(row[5]))
                 except:
                     continue
@@ -214,8 +228,12 @@ class Stock(object):
             Wilders periods of 14 corresponds with a ema of 27. Data is in
             reverse chronological order so iday+1 is earlier day"""
         """First calculate true range """
-        TR1 = np.array(self.high) - np.array(self.low)
-        TR1 = np.delete(TR1,-1)
+        TR1 = np.zeros(len(self.high)-1)
+        for iday in range(len(self.high)-1):
+            a = self.high[iday] - self.low[iday]
+            b = abs(self.high[iday] - self.close[iday+1])
+            c = abs(self.low[iday] - self.close[iday+1])
+            TR1[iday] = max(a, b, c)
         """initialize directional movement 1 (positive and negative) then calc"""
         days = len(self.close)
         DMP1 = np.zeros(days-1)
@@ -294,5 +312,98 @@ class Stock(object):
         
         return
         
+    def mfi_calc(self):
+        """ This method calculates the money flow index index of the stock."""
+            
+        TP = (np.array(self.high)+np.array(self.low)+np.array(self.close))/3.0
+        
+        mfpos1 = np.zeros(len(TP)-1)
+        mfneg1 = np.zeros(len(TP)-1)
+             
+        for iday in range(len(TP)-1):
+            diff = TP[iday] - TP[iday+1]
+            if (diff > 0):
+                mfpos1[iday] = diff * self.volume[iday]
+            else:
+                mfneg1[iday] = -1.0 * diff * self.volume[iday]
+                
+        mfpos14 = Stock.sma(mfpos1,14)
+        mfneg14 = Stock.sma(mfneg1,14)
+        mfneg14[mfneg14 < 0] = 0.0
+        
+        mfr = mfpos14/mfneg14
+        mfr[mfneg14 == 0] = 1E299
+        mfr[mfr >= 1E300] = 0
+        
+        self.mfi = 100 - 100/(1 + mfr)
+        
+        return
+        
+    def natr_calc(self):
+        """ This method calculates the Normalized average true range"""
+        """First calculate true range """
+        TR1 = np.zeros(len(self.high)-1)
+        for iday in range(len(self.high)-1):
+            a = self.high[iday] - self.low[iday]
+            b = abs(self.high[iday] - self.close[iday+1])
+            c = abs(self.low[iday] - self.close[iday+1])
+            TR1[iday] = max(a, b, c)
+        
+        
+        """ Do 14 day Wilder EMA on data which corresponds to 27 day EMA """
+        TR14 = Stock.ema(TR1,27)
+        close = self.close
+        close = np.delete(close,-1)
+        self.natr = 100 * TR14/close
+        return
+        
+    def roc_calc(self):
+        """ This method calculates the percentage up or down from 12 days
+            ago (Rate of change)"""
+        roc = np.zeros(len(self.close)-12)
+        for iday in range(len(self.close)-12):
+            roc[iday] = 100 * (self.close[iday] - self.close[iday+12]) \
+                    /self.close[iday+12]
+
+        self.roc = roc
+        return
+        
+    def stoch_calc(self):
+        """ This method calculates the Stochastic (STOCH)"""
+        high = self.high
+        low = self.low
+        percent_k = np.zeros(len(self.close)-14)
     
+        for iday in range(len(self.close)-14):
+            highest_high = np.max(high[iday:iday+14])
+            lowest_low = np.min(low[iday:iday+14])
+            percent_k[iday] = (self.close[iday]-lowest_low)/(highest_high-lowest_low)
+#        percent_k[percent_k == nan] = 1.0
+        where_are_NaNs = np.isnan(percent_k)
+        percent_k[where_are_NaNs] = 1
+
+        self.stoch = 100 * Stock.sma(percent_k,3)
+        return
+        
+    def uo_calc(self):
+        """ This method calculates the Ultimate Ocilator """
+        """First calculate true range """
+        TR = np.zeros(len(self.high)-1)
+        BP = np.zeros(len(self.high)-1)
+        for iday in range(len(self.high)-1):
+            low = min(self.low[iday], self.close[iday+1])
+            high = max(self.high[iday], self.close[iday+1])
+            BP[iday] = self.close[iday] - low
+            TR[iday] = high - low
+        
+        
+        """ Calculate 7, 14 and 28 day moving averages """
+        ave7 = Stock.sma(BP,7)/Stock.sma(TR,7)
+        ave14 = Stock.sma(BP,14)/Stock.sma(TR,14)
+        ave28 = Stock.sma(BP,28)/Stock.sma(TR,28)
+        
+        inv7 = 1.0/7.0
+        self.uo = 100 * inv7 * (4.0*ave7 + 2.0*ave14 + ave28)
+        self.uo = np.nan_to_num(self.uo)
+        return
         

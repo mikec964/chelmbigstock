@@ -94,6 +94,16 @@ class LearningData(object):
                     temp_values.append(stocks[i].cci[i_day])
                 if 'cmo' in features:
                     temp_values.append(stocks[i].cmo[i_day])
+                if 'mfi' in features:
+                    temp_values.append(stocks[i].mfi[i_day])
+                if 'natr' in features:
+                    temp_values.append(stocks[i].natr[i_day])
+                if 'roc' in features:
+                    temp_values.append(stocks[i].roc[i_day])
+                if 'stoch' in features:
+                    temp_values.append(stocks[i].stoch[i_day])
+                if 'uo' in features:
+                    temp_values.append(stocks[i].uo[i_day])
                 self.X.append(temp_values)
                 # Now get the future value and append it to self.y
                 # For classification problem assign a one to stock that has gone
