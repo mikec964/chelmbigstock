@@ -20,16 +20,16 @@ import dateutl
 from Stock import Stock
 from LearningData import LearningData
 
-"""from sklearn import preprocessing
+from sklearn import preprocessing
 
-std_scale = preprocessing.StandardScaler().fit(X_train)
+"""std_scale = preprocessing.StandardScaler().fit(X_train)
 X_train_std = std_scale.transform(X_train)
 X_test_std = std_scale.transform(X_test) """
 
-def form_data(init_param):
+def form_data(stocks, init_param):
     """ This function constructs the training, testing and cross validation
         objects for the stock market analysis """
-    stocks = Stock.read_stocks('../data/stocks_read.txt', init_param.max_stocks)
+    
     rs = stocks[1].rsi
     ts = stocks[1].tsi
     a = 1
@@ -161,16 +161,106 @@ def set_reg_param(training_data, cv_data, alpha_min, alpha_max):
         flag = 0 # Local minimum is in range so return 0 
         
     return min_alpha, flag
+    
+def examine(stocks, init_param, C_in, gamma_in, verbose):
+    """ This plot takes in the stocks and features. It plots a ROC curve
+        returns the Area under the curve"""
+    from sklearn.svm import SVC
+    from sklearn import metrics
+    import matplotlib.pyplot as plt
+#    import pandas as pd
+    
+    training_data, test_data = form_data(stocks, init_param)
+    std_scale = preprocessing.StandardScaler().fit(training_data.X)
+    training_data.X = std_scale.transform(training_data.X)
+    test_data.X = std_scale.transform(test_data.X)
+    
+    svm = SVC(kernel='rbf', random_state=0, gamma = gamma_in, C=C_in, probability=True)
+    svm.fit(training_data.X, training_data.y)
+    preds = svm.predict_proba(test_data.X)[:,1]
+    fpr, tpr, _ = metrics.roc_curve(test_data.y, preds)
+
+#    df = pd.DataFrame(dict(fpr=fpr, tpr=tpr))
+    roc_auc = metrics.auc(fpr,tpr)
+    
+    if verbose:
+        plt.figure()
+        lw = 2
+        plt.plot(fpr, tpr, color='darkorange',
+                 lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+        plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('Receiver operating characteristic example')
+        plt.legend(loc="lower right")
+        plt.show()
+    
+    return roc_auc
+    
+def choose_features(stocks, init_param, C, gamma):
+    """ This function chooses the feature from the available_features array
+        that when added to chosen_features give maximium area under curve. 
+        It returns chosen features and available_features arrays with 
+        the best feature added to the former and removed from the latter.
+        It also appends the best aoc onto the aoc array"""
+        
+    chosen_features = []
+    available_features = init_param.features[:]
+    """The code is written to edit init_param.features but make a copy to 
+       restore things after the loop"""
+    init_param_features = init_param.features[:]
+    aoc = []
+    
+    while (len(available_features) > 5):
+        best_aoc = 0
+        for feature in available_features:
+            input_features = chosen_features[:]
+            input_features.append(feature)
+            init_param.features = input_features
+            feature_aoc = examine(stocks, init_param, C, gamma, False)
+            if feature_aoc > best_aoc:
+                best_aoc = feature_aoc
+                best_feature = feature
+            
+        chosen_features.append(best_feature)
+        available_features.remove(best_feature)
+        aoc.append(best_aoc)
+    
+    """ Restore init_param.features """
+    init_param.features = init_param_features[:]
+    return chosen_features, available_features, aoc
+        
+      
         
         
 
 def execute(init_param): 
     """ execute is the function where each run is done. main sets parameters then calls execute"""
     
+    
     from sklearn.svm import SVC
     import matplotlib.pyplot as plt
     start = timeit.timeit()
-    training_data, test_data = form_data(init_param)
+    stocks = Stock.read_stocks('../data/stocks_read.txt', init_param.max_stocks)
+ #   stocks = 1
+    
+    """ Chose the best feature """
+#    chosen_features = []
+#    available_features = init_param.features
+    C = 1
+    gamma = 0.2
+    chosen_features, available_features, aoc = choose_features(stocks, init_param, C, gamma)
+
+    init_param.features = ['rsi','tsi']
+    verbose = True
+    examine(stocks, init_param, verbose, C, gamma)
+                         
+    training_data, test_data = form_data(stocks, init_param)
+    std_scale = preprocessing.StandardScaler().fit(training_data.X)
+    training_data.X = std_scale.transform(training_data.X)
+    test_data.X = std_scale.transform(test_data.X)
     end1 = timeit.timeit()
     print("form_data took ", (end1-start))
     print("training_data has ",len(training_data.y)," elements")
